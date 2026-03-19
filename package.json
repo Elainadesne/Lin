@@ -1,0 +1,43 @@
+{
+  "name": "lin",
+  "version": "1.0.0",
+  "description": "This project wouldn't be possible without the amazing resources, libraries, and inspiration from the open-source community:",
+  "main": "main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "format": "prettier . --write"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SeveredLine/Lin.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "Unlicense",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/SeveredLine/Lin/issues"
+  },
+  "homepage": "https://github.com/SeveredLine/Lin#readme",
+  "dependencies": {
+    "dompurify": "^3.3.3",
+    "howler": "^2.2.4",
+    "marked": "^17.0.4",
+    "roughjs": "^4.6.6",
+    "three": "^0.183.2"
+  },
+  "devDependencies": {
+    "prettier": "3.8.1",
+    "vite": "^8.0.0",
+    "vite-plugin-font": "^5.1.2"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "cn-font-split",
+      "koffi",
+      "protobufjs"
+    ]
+  }
+}
