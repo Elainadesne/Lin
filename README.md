@@ -67,7 +67,6 @@ pnpm dev
 
 ### 字体
 
-植物的算法之美
 本项目中使用的所有字体均有合法来源，并经过 `vite-plugin-font` 切片优化以提升加载性能：
 
 - **霞鹜文楷 屏幕阅读版** - 设计者 lxgw。（采用 [OFL-1.1](public/licenses/OFL-1.1-LXGWWenKaiScreen.txt) 协议）
