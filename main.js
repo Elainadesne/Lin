@@ -10,6 +10,9 @@ import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import rough from 'roughjs';
 import dayjs from 'dayjs';
+import flatpickr from 'flatpickr';
+import 'flatpickr/dist/flatpickr.min.css';
+import { Mandarin } from 'flatpickr/dist/l10n/zh.js';
 
 marked.use({ gfm: true, breaks: true });
 
@@ -187,11 +190,91 @@ function initApp() {
   lampCord.addEventListener('mousedown', toggleDarkMode);
   lampCord.addEventListener('touchstart', toggleDarkMode);
 
-  const sendBtn = document.getElementById('sendBtn');
-  const chatInput = document.getElementById('chatInput');
   const chatHistory = document.getElementById('chat-history');
-  const chatPage = document.getElementById('page-0');
-  const globalOverlay = document.getElementById('global-overlay');
+  const calendarBtn = document.getElementById('calendarBtn');
+  const backToLatestBtn = document.getElementById('backToLatestBtn');
+  const chatInput = document.getElementById('chatInput');
+  const sendBtn = document.getElementById('sendBtn');
+
+  if (calendarBtn && backToLatestBtn) {
+    let isJumping = false;
+    let lastViewedYear = new Date().getFullYear();
+    let lastViewedMonth = new Date().getMonth();
+
+    const handleMonthOrYearChange = function (sd, ds, instance) {
+      if (isJumping || !window.availableDatesArr || window.availableDatesArr.length === 0) return;
+
+      let dir = 1;
+      if (
+        instance.currentYear < lastViewedYear ||
+        (instance.currentYear === lastViewedYear && instance.currentMonth < lastViewedMonth)
+      ) {
+        dir = -1;
+      }
+
+      const currentPrefix = `${instance.currentYear}-${String(instance.currentMonth + 1).padStart(2, '0')}`;
+      const hasRecords = window.availableDatesArr.some((d) => d.startsWith(currentPrefix));
+
+      if (!hasRecords) {
+        isJumping = true;
+        let targetDate =
+          dir === 1
+            ? window.availableDatesArr.find((d) => d > currentPrefix)
+            : window.availableDatesArr
+                .slice()
+                .reverse()
+                .find((d) => d < currentPrefix);
+
+        if (targetDate) {
+          setTimeout(() => {
+            instance.jumpToDate(targetDate);
+            lastViewedYear = instance.currentYear;
+            lastViewedMonth = instance.currentMonth;
+            isJumping = false;
+          }, 10);
+        } else {
+          isJumping = false;
+        }
+      } else {
+        lastViewedYear = instance.currentYear;
+        lastViewedMonth = instance.currentMonth;
+      }
+    };
+
+    window.fpInstance = flatpickr(calendarBtn, {
+      locale: Mandarin,
+      disableMobile: true,
+      enable: [],
+      onOpen: function (sd, ds, instance) {
+        lastViewedYear = instance.currentYear;
+        lastViewedMonth = instance.currentMonth;
+      },
+      onMonthChange: handleMonthOrYearChange,
+      onYearChange: handleMonthOrYearChange,
+      onChange: function (selectedDates, dateStr) {
+        if (!selectedDates.length) return;
+
+        const messages = Array.from(chatHistory.children).filter(
+          (el) => el.dataset && el.dataset.date,
+        );
+        let targetNode = messages.find((el) => el.dataset.date === dateStr);
+
+        if (targetNode) {
+          chatHistory.scrollTo({ top: targetNode.offsetTop - 15, behavior: 'smooth' });
+          chatInput.style.display = 'none';
+          sendBtn.style.display = 'none';
+          backToLatestBtn.style.display = 'flex';
+        }
+      },
+    });
+
+    backToLatestBtn.addEventListener('click', () => {
+      chatInput.style.display = 'block';
+      sendBtn.style.display = 'block';
+      backToLatestBtn.style.display = 'none';
+      if (chatHistory) chatHistory.scrollTo({ top: chatHistory.scrollHeight, behavior: 'smooth' });
+    });
+  }
 
   const tarotDeck = [
     { id: '00_The_Fool', path: 'Major Arcana/00_The_Fool.webp', cn: '愚者' },
@@ -2425,6 +2508,7 @@ function initApp() {
   }
 
   const fontSizeSlider = document.getElementById('fontSizeSlider');
+  const vScrollSlider = document.getElementById('vScrollSlider');
   const turnSpeedSlider = document.getElementById('turnSpeedSlider');
   const resetSettingsBtn = document.getElementById('resetSettingsBtn');
   const fsBtn = document.getElementById('fsBtn');
@@ -2486,6 +2570,19 @@ function initApp() {
     });
   }
 
+  if (vScrollSlider) {
+    vScrollSlider.value = globalSettings.vScrollCount || 10;
+    vScrollSlider.addEventListener('input', (e) => {
+      let val = parseInt(e.target.value);
+      globalSettings.vScrollCount = val;
+      saveGlobalSettings();
+      if (window._chatObserver) {
+        window._chatObserver.disconnect();
+        window._chatObserver = null;
+      }
+    });
+  }
+
   if (resetSettingsBtn) {
     resetSettingsBtn.addEventListener('click', () => {
       if (volumeSlider) volumeSlider.value = 30;
@@ -2505,6 +2602,8 @@ function initApp() {
       root.style.setProperty('--turn-speed', '1s');
       Howler.volume(0.3);
 
+      if (vScrollSlider) vScrollSlider.value = 10;
+      globalSettings.vScrollCount = 10;
       globalSettings.vol = 30;
       globalSettings.fontSize = 15;
       globalSettings.turnSpeed = 6;
@@ -2877,60 +2976,132 @@ window.addEventListener('message', (event) => {
     let latestScale = null;
     let isTarot = false;
 
+    const gSettings = JSON.parse(localStorage.getItem('LinUI_GlobalSettings')) || {};
+    const preloadCount = gSettings.vScrollCount || 10;
+    const vMargin = preloadCount * 120;
+
+    if (!window._chatObserver) {
+      window._chatObserver = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              const node = entry.target;
+              if (node.dataset.rendered !== 'true') {
+                const rawText = node.dataset.raw;
+                const isAI = node.dataset.role === 'ai';
+                let html = window._msgCache.get(rawText);
+                if (!html) {
+                  let text = rawText;
+                  if (isAI) {
+                    text = text
+                      .replace(/<状态栏>[\s\S]*?<\/状态栏>/g, '')
+                      .replace(/\[action:.*?\]/gi, '');
+                    text = window.applyCharacterFonts(text);
+                  }
+                  html = window.parseMD(text);
+                  window._msgCache.set(rawText, html);
+                }
+                node.innerHTML = html;
+                node.dataset.rendered = 'true';
+                node.style.minHeight = 'auto';
+              }
+            }
+          });
+        },
+        { root: document.getElementById('chat-history'), rootMargin: `${vMargin}px 0px` },
+      );
+    }
+
     const fragment = document.createDocumentFragment();
     const existingNodes = Array.from(chatHistory.children).filter(
       (el) => el.id !== 'typing-bubble' && !el.classList.contains('temp-note'),
     );
+
+    window.availableDates = new Set();
+    window.availableMonths = new Set();
 
     msgs.forEach((m, i) => {
       const rawText = m.text.trim();
       const isAI = m.role === 'ai';
       let node = existingNodes[i];
 
+      let dataDate = dayjs().format('YYYY-MM-DD');
+      if (m.timestamp) {
+        const match = String(m.timestamp).match(
+          /(\d{4})[年\-\/.]\s*(\d{1,2})[月\-\/.]\s*(\d{1,2})/,
+        );
+        if (match) {
+          dataDate = `${match[1]}-${match[2].padStart(2, '0')}-${match[3].padStart(2, '0')}`;
+        } else {
+          const d = dayjs(m.timestamp);
+          if (d.isValid()) dataDate = d.format('YYYY-MM-DD');
+        }
+      }
+
+      window.availableDates.add(dataDate);
+      window.availableMonths.add(dataDate.substring(0, 7));
+
       if (isAI && i === msgs.length - 1) {
         const statusMatch = rawText.match(/<状态栏>([\s\S]*?)<\/状态栏>/);
         if (statusMatch) latestStatus = statusMatch[1];
-        if (latestScale) window.loadAndShowScale(latestScale);
-        if (isTarot) window.drawTarotCard();
       }
 
       if (node && node.dataset.raw === rawText && node.dataset.role === m.role) {
+        window._chatObserver.observe(node);
         return;
       }
 
-      if (!cache.has(rawText)) {
-        let text = rawText;
-        if (isAI) {
-          text = text
-            .replace(/<状态栏>[\s\S]*?<\/状态栏>/g, '')
-            .replace(/\[action:.*?\]/gi, '')
-            .replace(/\{\{setglobalvar::.*?\}\}/gi, '');
-
-          text = window.applyCharacterFonts(text);
-        }
-        let html = window.parseMD(text);
-        cache.set(rawText, html);
-      }
-
-      const contentHTML = cache.get(rawText);
       const className = isAI ? 'ai-msg msg-narration' : 'user-note msg-user';
 
-      if (node) {
-        if (node.className !== className) node.className = className;
-        node.innerHTML = contentHTML;
-        node.dataset.raw = rawText;
-        node.dataset.role = m.role;
-        if (!isAI) node.style.transform = `rotate(${(((i * 13.5) % 6) - 3).toFixed(1)}deg)`;
-      } else {
-        const newNode = document.createElement('div');
-        newNode.className = className;
-        newNode.innerHTML = contentHTML;
-        newNode.dataset.raw = rawText;
-        newNode.dataset.role = m.role;
-        if (!isAI) newNode.style.transform = `rotate(${(((i * 13.5) % 6) - 3).toFixed(1)}deg)`;
-        fragment.appendChild(newNode);
+      if (!node) {
+        node = document.createElement('div');
+        fragment.appendChild(node);
+      }
+
+      if (node.className !== className) node.className = className;
+      node.dataset.raw = rawText;
+      node.dataset.role = m.role;
+      node.dataset.date = dataDate;
+      node.dataset.rendered = 'false';
+      node.style.minHeight = '60px';
+      node.innerHTML = '<div style="opacity:0.3; padding:10px;">...</div>';
+      if (!isAI) node.style.transform = `rotate(${(((i * 13.5) % 6) - 3).toFixed(1)}deg)`;
+
+      window._chatObserver.observe(node);
+
+      if (i >= msgs.length - preloadCount) {
+        let html = window._msgCache.get(rawText);
+        if (!html) {
+          let text = rawText;
+          if (isAI) {
+            text = text
+              .replace(/<状态栏>[\s\S]*?<\/状态栏>/g, '')
+              .replace(/\[action:.*?\]/gi, '')
+              .replace(/\{\{setglobalvar::.*?\}\}/gi, '');
+            text = window.applyCharacterFonts(text);
+          }
+          html = window.parseMD(text);
+          window._msgCache.set(rawText, html);
+        }
+        node.innerHTML = html;
+        node.dataset.rendered = 'true';
+        node.style.minHeight = 'auto';
       }
     });
+
+    if (window.fpInstance && window.availableDates.size > 0) {
+      window.availableDatesArr = Array.from(window.availableDates).sort();
+      window.fpInstance.set('enable', window.availableDatesArr);
+      window.fpInstance.set('minDate', window.availableDatesArr[0]);
+      window.fpInstance.set(
+        'maxDate',
+        window.availableDatesArr[window.availableDatesArr.length - 1],
+      );
+    }
+
+    if (window.fpInstance) {
+      window.fpInstance.set('enable', Array.from(availableDates));
+    }
 
     if (fragment.children.length > 0) {
       chatHistory.appendChild(fragment);

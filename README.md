@@ -64,6 +64,7 @@ pnpm dev
   - [Prettier](https://prettier.io/) - 代码格式化工具。（采用 [MIT](public/licenses/MIT-prettier.txt) 协议）
   - [Rough.js](https://roughjs.com/) - 手绘图形库。（采用 [MIT](public/licenses/MIT-roughjs.txt) 协议）
   - [Day.js](https://day.js.org/) - 时间和日期库。（采用 [MIT](public/licenses/MIT-dayjs.txt) 协议）
+  - [flatpickr](https://flatpickr.js.org/) - 日期时间选择器。。（采用 [MIT](public/licenses/MIT-flatpickr.txt) 协议）
 - **动画与视觉特效:**
   - **彩带动画:** 灵感来自 CodePen 上的 [iprodev](https://codepen.io/iprodev/pen/azpWBr)。（采用 [MIT](public/licenses/MIT-iprodev.txt) 协议）
   - **礼盒动画:** 灵感来自 CodePen 上的 [jkantner](https://codepen.io/jkantner/pen/oNgwLLz)。（采用 [MIT](public/licenses/MIT-jkantner.txt) 协议）

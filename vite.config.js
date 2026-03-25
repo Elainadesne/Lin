@@ -25,6 +25,7 @@ export default defineConfig({
             if (id.includes('dompurify')) return 'vendor-dompurify';
             if (id.includes('roughjs')) return 'vendor-roughjs';
             if (id.includes('dayjs')) return 'vendor-dayjs';
+            if (id.includes('flatpickr')) return 'vendor-flatpickr';
             return 'vendor';
           }
         },
@@ -40,6 +41,6 @@ export default defineConfig({
   },
 
   optimizeDeps: {
-    include: ['three', 'howler', 'marked', 'dompurify', 'roughjs', 'dayjs'],
+    include: ['three', 'howler', 'marked', 'dompurify', 'roughjs', 'dayjs', 'flatpickr'],
   },
 });

@@ -555,11 +555,13 @@ body.dark-mode .page[data-index='3'] .page-back {
 #chat-history {
   position: absolute;
   top: 25px;
-  bottom: 90px;
+  bottom: 0px;
   left: 20px;
   right: 20px;
+  padding-bottom: 95px;
   overflow-y: auto;
   scrollbar-width: none;
+  z-index: 10;
 }
 #chat-history::-webkit-scrollbar {
   display: none;
@@ -2727,4 +2729,138 @@ body.dark-mode .dev-group {
   color: #e74c3c;
   font-size: 12px;
   font-weight: bold;
+}
+
+.glass-btn {
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  color: var(--text-main);
+  font-size: 15px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.glass-btn:hover {
+  background: rgba(255, 255, 255, 0.7);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+}
+.glass-btn:active {
+  transform: translateY(1px);
+}
+.glass-btn-wide {
+  width: auto;
+  padding: 0 16px;
+  border-radius: 20px;
+  flex: 1;
+  font-weight: 800;
+  color: #e74c3c;
+  letter-spacing: 1px;
+}
+body.dark-mode .glass-btn {
+  background: rgba(0, 0, 0, 0.3);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+body.dark-mode .glass-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+body.dark-mode .glass-btn-wide {
+  color: #ff9a9a;
+}
+
+.flatpickr-calendar {
+  background: rgba(255, 255, 255, 0.25) !important;
+  backdrop-filter: blur(16px) saturate(120%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(120%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1) !important;
+  font-family: var(--font-user) !important;
+  padding: 8px !important;
+}
+
+.flatpickr-calendar.arrowTop::before,
+.flatpickr-calendar.arrowTop::after,
+.flatpickr-calendar.arrowBottom::before,
+.flatpickr-calendar.arrowBottom::after {
+  display: none !important;
+}
+
+body.dark-mode .flatpickr-calendar {
+  background: rgba(20, 20, 20, 0.4) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4) !important;
+}
+
+.flatpickr-month,
+.flatpickr-weekday,
+.flatpickr-current-month .numInputWrapper span.arrowUp:after,
+.flatpickr-current-month .numInputWrapper span.arrowDown:after {
+  color: var(--text-ai) !important;
+  fill: var(--text-ai) !important;
+}
+
+.flatpickr-day {
+  color: var(--text-main) !important;
+  border-radius: 12px !important;
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+}
+body.dark-mode .flatpickr-day {
+  color: #e2e8f0 !important;
+}
+
+.flatpickr-day.disabled {
+  opacity: 0.15 !important;
+}
+
+.flatpickr-day:hover:not(.disabled) {
+  background: rgba(255, 255, 255, 0.4) !important;
+  border-color: rgba(255, 255, 255, 0.6) !important;
+  transform: scale(1.05);
+}
+body.dark-mode .flatpickr-day:hover:not(.disabled) {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.flatpickr-day.selected {
+  background: rgba(255, 255, 255, 0.8) !important;
+  border-color: #fff !important;
+  color: #c64032 !important;
+  font-weight: 900 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+  transform: scale(1.1);
+}
+body.dark-mode .flatpickr-day.selected {
+  background: rgba(0, 0, 0, 0.6) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  color: #ff9a9a !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+.flatpickr-months .flatpickr-month {
+  background: transparent !important;
+}
+.flatpickr-current-month .flatpickr-monthDropdown-months {
+  background: rgba(255, 255, 255, 0.8) !important;
+  color: var(--text-main) !important;
+  border-radius: 8px !important;
+  padding: 2px !important;
+  outline: none !important;
+}
+body.dark-mode .flatpickr-current-month .flatpickr-monthDropdown-months {
+  background: rgba(30, 30, 30, 0.9) !important;
+  color: #e2e8f0 !important;
 }
