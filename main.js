@@ -9,6 +9,7 @@ import { Howl, Howler } from 'howler';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import rough from 'roughjs';
+import dayjs from 'dayjs';
 
 marked.use({ gfm: true, breaks: true });
 
@@ -498,10 +499,10 @@ function initApp() {
     };
   };
 
-  let isGenerating = false;
+  window.isGenerating = false;
 
   function sendMessage() {
-    if (isGenerating) {
+    if (window.isGenerating) {
       if (window.parent !== window) {
         window.parent.postMessage({ type: 'STOP_GEN_TO_ST' }, '*');
       }
@@ -1408,15 +1409,35 @@ function initApp() {
   });
 
   const storageKey = `LinAudio_${timePeriod}`;
+  const globalStorageKey = `LinUI_GlobalSettings`;
+
+  let globalSettings = JSON.parse(localStorage.getItem(globalStorageKey)) || {
+    vol: 30,
+    fontSize: 15,
+    turnSpeed: 6,
+  };
+
   let playerSettings = JSON.parse(localStorage.getItem(storageKey)) || {
     mode: 1,
     disabled: [],
-    vol: 30,
   };
   let playMode = playerSettings.mode;
 
+  if (typeof Howler !== 'undefined') Howler.volume(globalSettings.vol / 100);
+  document.documentElement.style.setProperty(
+    '--base-font-size',
+    `calc(var(--ui-base-size) + ${globalSettings.fontSize - 15}px)`,
+  );
+  document.documentElement.style.setProperty(
+    '--turn-speed',
+    Math.max(0.2, 2.2 - globalSettings.turnSpeed * 0.2).toFixed(2) + 's',
+  );
+
   function savePlayerSettings() {
     localStorage.setItem(storageKey, JSON.stringify(playerSettings));
+  }
+  function saveGlobalSettings() {
+    localStorage.setItem(globalStorageKey, JSON.stringify(globalSettings));
   }
 
   window.activateBirthdayMode = function () {
@@ -2431,20 +2452,22 @@ function initApp() {
   }
 
   if (volumeSlider) {
+    volumeSlider.value = globalSettings.vol;
     volumeSlider.addEventListener('input', (e) => {
-      let vol = e.target.value;
+      let vol = parseInt(e.target.value);
       Howler.volume(vol / 100);
-      if (typeof playerSettings !== 'undefined') {
-        playerSettings.vol = vol;
-        savePlayerSettings();
-      }
+      globalSettings.vol = vol;
+      saveGlobalSettings();
     });
   }
 
   if (fontSizeSlider) {
+    fontSizeSlider.value = globalSettings.fontSize;
     fontSizeSlider.addEventListener('input', (e) => {
-      let offset = parseInt(e.target.value) - 15;
-      root.style.setProperty('--base-font-size', `calc(var(--ui-base-size) + ${offset}px)`);
+      let val = parseInt(e.target.value);
+      root.style.setProperty('--base-font-size', `calc(var(--ui-base-size) + ${val - 15}px)`);
+      globalSettings.fontSize = val;
+      saveGlobalSettings();
 
       setTimeout(() => {
         if (window.adjustTabs) window.adjustTabs();
@@ -2453,16 +2476,20 @@ function initApp() {
   }
 
   if (turnSpeedSlider) {
+    turnSpeedSlider.value = globalSettings.turnSpeed;
     turnSpeedSlider.addEventListener('input', (e) => {
-      let speed = Math.max(0.2, 2.2 - e.target.value * 0.2).toFixed(2);
+      let val = parseInt(e.target.value);
+      let speed = Math.max(0.2, 2.2 - val * 0.2).toFixed(2);
       root.style.setProperty('--turn-speed', speed + 's');
+      globalSettings.turnSpeed = val;
+      saveGlobalSettings();
     });
   }
 
   if (resetSettingsBtn) {
     resetSettingsBtn.addEventListener('click', () => {
-      if (fontSizeSlider) fontSizeSlider.value = 15;
       if (volumeSlider) volumeSlider.value = 30;
+      if (fontSizeSlider) fontSizeSlider.value = 15;
       if (turnSpeedSlider) turnSpeedSlider.value = 6;
       if (autoPlaySwitch) autoPlaySwitch.checked = true;
       if (autoOpenSwitch) {
@@ -2477,8 +2504,13 @@ function initApp() {
       root.style.setProperty('--base-font-size', 'var(--ui-base-size)');
       root.style.setProperty('--turn-speed', '1s');
       Howler.volume(0.3);
+
+      globalSettings.vol = 30;
+      globalSettings.fontSize = 15;
+      globalSettings.turnSpeed = 6;
+      saveGlobalSettings();
+
       if (typeof playerSettings !== 'undefined') {
-        playerSettings.vol = 30;
         playerSettings.mode = 1;
         playerSettings.disabled = [];
         savePlayerSettings();
@@ -2751,9 +2783,72 @@ window.addEventListener('message', (event) => {
   if (event.data.type === 'TRIGGER_BIRTHDAY') {
     if (window.activateBirthdayMode) window.activateBirthdayMode();
   }
+  if (event.data.type === 'TRIGGER_TAROT') {
+    if (window.drawTarotCard) window.drawTarotCard();
+  }
+  if (event.data.type === 'TRIGGER_SCALE') {
+    if (window.loadAndShowScale) window.loadAndShowScale(event.data.scale);
+  }
+
+  if (event.data.type === 'SYNC_CHAT_VARS') {
+    try {
+      window.linMemos = JSON.parse(event.data.vars['LIN_MEMOS'] || '[]');
+      if (window.checkLinMemos) window.checkLinMemos();
+    } catch (e) {
+      window.linMemos = [];
+    }
+  }
 
   if (event.data.type === 'SYNC_CHAT') {
     const msgs = event.data.messages;
+
+    msgs.forEach((m) => {
+      if (m.role === 'ai' && m.rawText) {
+        const memoRegex = /\[action:add_memo::(.*?)::(.*?)\]/gi;
+        let match;
+        let modified = false;
+        let newRawText = m.rawText;
+
+        while ((match = memoRegex.exec(m.rawText)) !== null) {
+          const targetTimeStr = match[1].trim();
+          const taskStr = match[2].trim();
+
+          const targetTimestamp = dayjs(targetTimeStr).valueOf();
+
+          if (!isNaN(targetTimestamp)) {
+            window.linMemos = window.linMemos || [];
+            window.linMemos.push({
+              target: targetTimestamp,
+              task: taskStr,
+              createdStr: dayjs().format('YYYY-MM-DD HH:mm'),
+            });
+
+            if (window.parent !== window) {
+              window.parent.postMessage(
+                { type: 'SET_CHAT_VAR', key: 'LIN_MEMOS', value: JSON.stringify(window.linMemos) },
+                '*',
+              );
+            }
+          }
+          newRawText = newRawText.replace(match[0], '');
+          modified = true;
+        }
+
+        if (modified) {
+          m.rawText = newRawText;
+          m.text = m.text.replace(memoRegex, '');
+          if (window.parent !== window) {
+            window.parent.postMessage(
+              { type: 'UPDATE_MESSAGE_TEXT', id: m.id, text: newRawText },
+              '*',
+            );
+          }
+        }
+      }
+    });
+
+    if (window.checkLinMemos) window.checkLinMemos();
+
     const chatHistory = document.getElementById('chat-history');
     const chatPage = document.getElementById('page-0');
     if (!chatHistory || !chatPage) return;
@@ -2795,9 +2890,8 @@ window.addEventListener('message', (event) => {
       if (isAI && i === msgs.length - 1) {
         const statusMatch = rawText.match(/<状态栏>([\s\S]*?)<\/状态栏>/);
         if (statusMatch) latestStatus = statusMatch[1];
-        const scaleMatch = rawText.match(/\[action:run_(.*?)_test\]/i);
-        if (scaleMatch) latestScale = scaleMatch[1].toLowerCase();
-        if (rawText.match(/\[action:draw_tarot\]/i)) isTarot = true;
+        if (latestScale) window.loadAndShowScale(latestScale);
+        if (isTarot) window.drawTarotCard();
       }
 
       if (node && node.dataset.raw === rawText && node.dataset.role === m.role) {
@@ -2919,11 +3013,18 @@ window.addEventListener('message', (event) => {
   }
 
   if (event.data.type === 'GEN_STATE') {
-    isGenerating = event.data.state;
-    sendBtn.innerHTML = isGenerating
-      ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="white" class="send-btn-icon"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>`
-      : '↑';
-    sendBtn.style.background = '';
+    window.isGenerating = event.data.state;
+    const sendBtnEl = document.getElementById('sendBtn');
+    if (sendBtnEl) {
+      sendBtnEl.innerHTML = window.isGenerating
+        ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="white" class="send-btn-icon"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>`
+        : '↑';
+      sendBtnEl.style.background = '';
+    }
+  }
+
+  if (event.data.type === 'CLEAR_STORAGE') {
+    localStorage.clear();
   }
 
   if (event.data.type === 'STREAM_UPDATE') {
@@ -2979,3 +3080,44 @@ window.addEventListener('message', (event) => {
     }
   }
 });
+
+window.checkLinMemos = function () {
+  if (!window.linMemos || !Array.isArray(window.linMemos) || window.linMemos.length === 0) return;
+
+  const now = Date.now();
+  let updated = false;
+  let triggeredMemos = [];
+
+  window.linMemos = window.linMemos.filter((m) => {
+    if (now >= m.target) {
+      triggeredMemos.push(m);
+      updated = true;
+      return false;
+    }
+    return true;
+  });
+
+  if (updated && window.parent !== window) {
+    window.parent.postMessage(
+      {
+        type: 'SET_CHAT_VAR',
+        key: window.linMemos.length > 0 ? 'LIN_MEMOS' : null,
+        value: window.linMemos.length > 0 ? JSON.stringify(window.linMemos) : null,
+      },
+      '*',
+    );
+
+    const promptLines = triggeredMemos
+      .map(
+        (m) =>
+          `[系统备忘录触发] 你曾在 ${m.createdStr} 记录了一项预计在今天/近期发生的事项：“${m.task}”。现实时间已到达或超过，请在接下来的对话中自然地提及、询问或关心此事的进展。`,
+      )
+      .join('\\n');
+
+    window.parent.postMessage({ type: 'SEND_HIDDEN_TO_AI', text: promptLines }, '*');
+  }
+};
+
+setInterval(() => {
+  if (window.checkLinMemos) window.checkLinMemos();
+}, 60000);

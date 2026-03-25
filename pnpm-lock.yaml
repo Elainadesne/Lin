@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      dayjs:
+        specifier: ^1.11.20
+        version: 1.11.20
       dompurify:
         specifier: ^3.3.3
         version: 3.3.3
@@ -287,6 +290,9 @@ packages:
   css-tree@3.2.1:
     resolution: {integrity: sha512-X7sjQzceUhu1u7Y/ylrRZFU2FS6LRiFVp6rKLPg23y3x3c3DOKAwuXGDp+PAGjh6CSnCjYeAul8pcT8bAl+lSA==}
     engines: {node: ^10 || ^12.20.0 || ^14.13.0 || >=15.0.0}
+
+  dayjs@1.11.20:
+    resolution: {integrity: sha512-YbwwqR/uYpeoP4pu043q+LTDLFBLApUP6VxRihdfNTqu4ubqMlGDLd6ErXhEgsyvY0K6nCs7nggYumAN+9uEuQ==}
 
   detect-libc@2.1.2:
     resolution: {integrity: sha512-Btj2BOOO83o3WyH59e8MgXsxEQVcarkUOpEYrubB0urwnN10yQ364rsiByU11nZlqWYZm05i/of7io4mzihBtQ==}
@@ -913,6 +919,8 @@ snapshots:
     dependencies:
       mdn-data: 2.27.1
       source-map-js: 1.2.1
+
+  dayjs@1.11.20: {}
 
   detect-libc@2.1.2: {}
 
