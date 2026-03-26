@@ -957,7 +957,7 @@ function initApp() {
     cfg.m = selectedVar.m || {};
 
     let svgContent = `
-      <svg viewBox="0 0 400 650" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" class="botany-svg" style="overflow: hidden;">
+      <svg viewBox="-20 -20 440 690" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" class="botany-svg" style="overflow: visible;">
       <style>
         .botany-stem { animation: drawStem 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
         .botany-stem path { stroke-dasharray: inherit; stroke-dashoffset: inherit; stroke-linecap: round; stroke-linejoin: round; }
