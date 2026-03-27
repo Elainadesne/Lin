@@ -26,13 +26,13 @@
     "dompurify": "^3.3.3",
     "flatpickr": "^4.6.13",
     "howler": "^2.2.4",
-    "marked": "^17.0.4",
+    "marked": "^17.0.5",
     "roughjs": "^4.6.6",
     "three": "^0.183.2"
   },
   "devDependencies": {
     "prettier": "3.8.1",
-    "vite": "^8.0.0",
+    "vite": "^8.0.3",
     "vite-plugin-font": "^5.1.2"
   },
   "pnpm": {

@@ -47,7 +47,7 @@ rootStyle.setProperty('--font-ui-sans', `"${userCss.family}", cursive`);
 
 window.applyCharacterFonts = function (html) {
   html = html.replace(
-    /([\'"‘“『])\s*([LQC])[:：]\s*([\s\S]*?)([\'"’”』]|$)/g,
+    /([\'"‘“『「])\s*([LQC])[:：]\s*([\s\S]*?)([\'"’”』」]|$)/g,
     (match, openQ, role, content, closeQ) => {
       const roleMap = { L: 'msg-lin', Q: 'msg-qin', C: 'msg-children' };
       const cls = roleMap[role.toUpperCase()];
@@ -335,7 +335,9 @@ function initApp() {
 
   window.currentTarotFlipped = false;
 
-  function drawTarotCard() {
+  window.drawTarotCard = function () {
+    const globalOverlay = document.getElementById('global-overlay');
+    if (!globalOverlay) return;
     globalOverlay.innerHTML = '';
     window.currentTarotFlipped = false;
 
@@ -371,7 +373,7 @@ function initApp() {
       <button class="close-overlay-btn" onclick="window.closeTarotOverlay()" style="margin-top: 10px;">收起卡片</button>
     `;
     globalOverlay.appendChild(wrapper);
-  }
+  };
 
   window.syncTarotToAI = function (cnName, enName, orientation, element) {
     if (element.dataset.synced === 'true') return;
@@ -398,9 +400,54 @@ function initApp() {
 
   window.closeTarotOverlay = function () {
     if (!window.currentTarotFlipped) {
-      const report = `系统提示：来访者在看到塔罗牌后，并没有翻开它，而是直接选择收起了牌。`;
+      const report = `系统提示：来访者在看到塔罗牌后，并没有翻开它，而是选择收起了牌。`;
       if (window.parent !== window) {
         window.parent.postMessage({ type: 'SEND_HIDDEN_TO_AI', text: report }, '*');
+      }
+    }
+    window.closeGlobalOverlay();
+  };
+
+  const chatInputWrapper = document.querySelector('.input-wrapper');
+  if (chatInputWrapper && chatHistory) {
+    new ResizeObserver(() => {
+      chatHistory.style.paddingBottom = chatInputWrapper.offsetHeight + 15 + 'px';
+    }).observe(chatInputWrapper);
+  }
+
+  window.closeScaleOverlay = function (title, isDone) {
+    if (!isDone) {
+      const qs = document.querySelectorAll('.scale-q');
+      let details = [];
+      let answeredCount = 0;
+      let totalCount = qs.length;
+
+      if (totalCount === 0) {
+        const report = `系统提示：来访者拿到了《${title}》，但并没有填完就直接放在了一边。`;
+        if (window.parent !== window)
+          window.parent.postMessage({ type: 'SEND_HIDDEN_TO_AI', text: report }, '*');
+      } else {
+        qs.forEach((qDiv, idx) => {
+          let qTextEl = qDiv.querySelector('.scale-q-text');
+          let qText = qTextEl ? qTextEl.innerText.replace(/^\d+\.\s*/, '') : '未知题目';
+          const checkedInput = qDiv.querySelector('input[type="radio"]:checked');
+
+          if (checkedInput) {
+            const labelText = checkedInput.nextElementSibling
+              ? checkedInput.nextElementSibling.innerText
+              : '已选';
+            details.push(`${idx + 1}. ${qText} —— (已作答：${labelText})`);
+            answeredCount++;
+          } else {
+            details.push(`${idx + 1}. ${qText} —— (未作答/跳过)`);
+          }
+        });
+
+        const report = `系统提示：来访者拿到了《${title}》，但没有全部填完就收了起来。\n【进度情况】：共 ${totalCount} 题，仅填了 ${answeredCount} 题。\n【具体详情（按原题序）】：\n${details.join('\n')}\n\n[系统指令]：这是来访者目前填写的部分残缺结果，请根据此信息与来访者的态度，自然地推进对话。`;
+
+        if (window.parent !== window) {
+          window.parent.postMessage({ type: 'SEND_HIDDEN_TO_AI', text: report }, '*');
+        }
       }
     }
     window.closeGlobalOverlay();
@@ -607,15 +654,13 @@ function initApp() {
       tempNote.innerText = text;
       chatHistory.appendChild(tempNote);
 
-      if (chatPage) {
-        setTimeout(
-          () =>
-            chatPage.scrollTo({
-              top: chatPage.scrollHeight,
-              behavior: 'smooth',
-            }),
-          10,
-        );
+      if (chatHistory) {
+        requestAnimationFrame(() => {
+          chatHistory.scrollTo({
+            top: chatHistory.scrollHeight,
+            behavior: 'smooth',
+          });
+        });
       }
     }
   }
@@ -2622,7 +2667,7 @@ function initApp() {
     });
   }
 
-  window.devTestTarot = drawTarotCard;
+  window.devTestTarot = window.drawTarotCard;
 
   window.devTestScale = function () {
     const mockScale = {
@@ -3116,35 +3161,33 @@ window.addEventListener('message', (event) => {
     const isNewMessage = !window._lastMsgCount || msgs.length > window._lastMsgCount;
     window._lastMsgCount = msgs.length;
 
-    const isAtBottom = chatPage.scrollHeight - chatPage.scrollTop - chatPage.clientHeight < 300;
+    const lastMsg = msgs[msgs.length - 1];
+    const isLastMsgUser = lastMsg && lastMsg.role === 'user';
 
-    if (isNewMessage || isAtBottom || !window._hasScrolledInit) {
+    if (!window._hasScrolledInit || (isNewMessage && isLastMsgUser)) {
       const scrollToLastMessage = () => {
-        const lastNode = chatHistory.lastElementChild;
-        if (lastNode) {
-          lastNode.scrollIntoView({
-            behavior: window._hasScrolledInit ? 'smooth' : 'auto',
-            block: 'end',
-          });
+        if (!window._hasScrolledInit) {
+          chatHistory.scrollTop = chatHistory.scrollHeight;
+        } else {
+          chatHistory.scrollTo({ top: chatHistory.scrollHeight, behavior: 'smooth' });
         }
-        chatPage.scrollTop = 99999999;
       };
 
       requestAnimationFrame(() => {
         scrollToLastMessage();
 
-        if (chatPage.clientHeight === 0) {
+        if (chatHistory.clientHeight === 0) {
           window._pendingScroll = true;
         }
 
         if (!window._chatPageObserver) {
           window._chatPageObserver = new ResizeObserver(() => {
-            if (window._pendingScroll && chatPage.clientHeight > 0) {
+            if (window._pendingScroll && chatHistory.clientHeight > 0) {
               scrollToLastMessage();
               window._pendingScroll = false;
             }
           });
-          window._chatPageObserver.observe(chatPage);
+          window._chatPageObserver.observe(chatHistory);
         }
 
         setTimeout(scrollToLastMessage, 200);
@@ -3246,8 +3289,9 @@ window.addEventListener('message', (event) => {
       typingBubble.innerHTML = htmlOutput + '<span class="typing-cursor"></span>';
     }
 
-    if (chatPage) {
-      chatPage.scrollTo({ top: chatPage.scrollHeight, behavior: 'auto' });
+    const chatHistoryContainer = document.getElementById('chat-history');
+    if (chatHistoryContainer) {
+      chatHistoryContainer.scrollTop = chatHistoryContainer.scrollHeight;
     }
   }
 });
