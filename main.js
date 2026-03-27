@@ -394,7 +394,7 @@ function initApp() {
     const report = `系统提示：来访者刚刚翻开了一张塔罗牌。【抽牌结果】：${cnName} (${enName})【牌面状态】：${orientation}`;
 
     if (window.parent !== window) {
-      window.parent.postMessage({ type: 'SEND_HIDDEN_TO_AI', text: report }, '*');
+      window.parent.postMessage({ type: 'ADD_TEMP_PROMPT', text: report }, '*');
     }
   };
 
@@ -402,7 +402,7 @@ function initApp() {
     if (!window.currentTarotFlipped) {
       const report = `系统提示：来访者在看到塔罗牌后，并没有翻开它，而是选择收起了牌。`;
       if (window.parent !== window) {
-        window.parent.postMessage({ type: 'SEND_HIDDEN_TO_AI', text: report }, '*');
+        window.parent.postMessage({ type: 'ADD_TEMP_PROMPT', text: report }, '*');
       }
     }
     window.closeGlobalOverlay();
@@ -425,7 +425,7 @@ function initApp() {
       if (totalCount === 0) {
         const report = `系统提示：来访者拿到了《${title}》，但并没有填完就直接放在了一边。`;
         if (window.parent !== window)
-          window.parent.postMessage({ type: 'SEND_HIDDEN_TO_AI', text: report }, '*');
+          window.parent.postMessage({ type: 'ADD_TEMP_PROMPT', text: report }, '*');
       } else {
         qs.forEach((qDiv, idx) => {
           let qTextEl = qDiv.querySelector('.scale-q-text');
@@ -446,7 +446,7 @@ function initApp() {
         const report = `系统提示：来访者拿到了《${title}》，但没有全部填完就收了起来。\n【进度情况】：共 ${totalCount} 题，仅填了 ${answeredCount} 题。\n【具体详情（按原题序）】：\n${details.join('\n')}\n\n[系统指令]：这是来访者目前填写的部分残缺结果，请根据此信息与来访者的态度，自然地推进对话。`;
 
         if (window.parent !== window) {
-          window.parent.postMessage({ type: 'SEND_HIDDEN_TO_AI', text: report }, '*');
+          window.parent.postMessage({ type: 'ADD_TEMP_PROMPT', text: report }, '*');
         }
       }
     }
@@ -610,7 +610,7 @@ function initApp() {
       if (window.parent !== window) {
         window.parent.postMessage(
           {
-            type: 'SEND_HIDDEN_TO_AI',
+            type: 'ADD_TEMP_PROMPT',
             text: report,
           },
           '*',
@@ -2934,64 +2934,8 @@ window.addEventListener('message', (event) => {
     if (window.loadAndShowScale) window.loadAndShowScale(event.data.scale);
   }
 
-  if (event.data.type === 'SYNC_CHAT_VARS') {
-    try {
-      window.linMemos = JSON.parse(event.data.vars['LIN_MEMOS'] || '[]');
-      if (window.checkLinMemos) window.checkLinMemos();
-    } catch (e) {
-      window.linMemos = [];
-    }
-  }
-
   if (event.data.type === 'SYNC_CHAT') {
     const msgs = event.data.messages;
-
-    msgs.forEach((m) => {
-      if (m.role === 'ai' && m.rawText) {
-        const memoRegex = /\[action:add_memo::(.*?)::(.*?)\]/gi;
-        let match;
-        let modified = false;
-        let newRawText = m.rawText;
-
-        while ((match = memoRegex.exec(m.rawText)) !== null) {
-          const targetTimeStr = match[1].trim();
-          const taskStr = match[2].trim();
-
-          const targetTimestamp = dayjs(targetTimeStr).valueOf();
-
-          if (!isNaN(targetTimestamp)) {
-            window.linMemos = window.linMemos || [];
-            window.linMemos.push({
-              target: targetTimestamp,
-              task: taskStr,
-              createdStr: dayjs().format('YYYY-MM-DD HH:mm'),
-            });
-
-            if (window.parent !== window) {
-              window.parent.postMessage(
-                { type: 'SET_CHAT_VAR', key: 'LIN_MEMOS', value: JSON.stringify(window.linMemos) },
-                '*',
-              );
-            }
-          }
-          newRawText = newRawText.replace(match[0], '');
-          modified = true;
-        }
-
-        if (modified) {
-          m.rawText = newRawText;
-          m.text = m.text.replace(memoRegex, '');
-          if (window.parent !== window) {
-            window.parent.postMessage(
-              { type: 'UPDATE_MESSAGE_TEXT', id: m.id, text: newRawText },
-              '*',
-            );
-          }
-        }
-      }
-    });
-
-    if (window.checkLinMemos) window.checkLinMemos();
 
     const chatHistory = document.getElementById('chat-history');
     const chatPage = document.getElementById('page-0');
@@ -3295,44 +3239,3 @@ window.addEventListener('message', (event) => {
     }
   }
 });
-
-window.checkLinMemos = function () {
-  if (!window.linMemos || !Array.isArray(window.linMemos) || window.linMemos.length === 0) return;
-
-  const now = Date.now();
-  let updated = false;
-  let triggeredMemos = [];
-
-  window.linMemos = window.linMemos.filter((m) => {
-    if (now >= m.target) {
-      triggeredMemos.push(m);
-      updated = true;
-      return false;
-    }
-    return true;
-  });
-
-  if (updated && window.parent !== window) {
-    window.parent.postMessage(
-      {
-        type: 'SET_CHAT_VAR',
-        key: window.linMemos.length > 0 ? 'LIN_MEMOS' : null,
-        value: window.linMemos.length > 0 ? JSON.stringify(window.linMemos) : null,
-      },
-      '*',
-    );
-
-    const promptLines = triggeredMemos
-      .map(
-        (m) =>
-          `[系统备忘录触发] 你曾在 ${m.createdStr} 记录了一项预计在今天/近期发生的事项：“${m.task}”。现实时间已到达或超过，请在接下来的对话中自然地提及、询问或关心此事的进展。`,
-      )
-      .join('\\n');
-
-    window.parent.postMessage({ type: 'SEND_HIDDEN_TO_AI', text: promptLines }, '*');
-  }
-};
-
-setInterval(() => {
-  if (window.checkLinMemos) window.checkLinMemos();
-}, 60000);
