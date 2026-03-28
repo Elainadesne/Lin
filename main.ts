@@ -16,11 +16,64 @@ import { Mandarin } from 'flatpickr/dist/l10n/zh.js';
 
 marked.use({ gfm: true, breaks: true });
 
+declare global {
+  interface Window {
+    applyCharacterFonts: (html: string) => string;
+    parseMD: (str: string) => string;
+    closeBook: () => void;
+    fpInstance: any;
+    availableDatesArr: string[];
+    availableDates: Set<string>;
+    availableMonths: Set<string>;
+    currentTarotFlipped: boolean;
+    drawTarotCard: () => void;
+    syncTarotToAI: (
+      cnName: string,
+      enName: string,
+      orientation: string,
+      element: HTMLElement,
+    ) => void;
+    closeTarotOverlay: () => void;
+    closeGlobalOverlay: () => void;
+    closeScaleOverlay: (title: string, isDone: boolean) => void;
+    loadAndShowScale: (scaleId: string) => Promise<void>;
+    renderScaleUI: (scale: any) => void;
+    isGenerating: boolean;
+    adjustTabs: () => void;
+    __devPlantOverride: { month: number; variant: number } | null;
+    PLANT_CONFIG: any[];
+    devTestTarot: () => void;
+    devTestScale: () => void;
+    devTestPlant: (isRandom?: boolean) => void;
+    toggleAutoPlant: () => void;
+    devTestStream: () => void;
+    devTestNonStream: () => void;
+    activateBirthdayMode: () => void;
+    stopConfetti: () => void;
+    THREE: any;
+    _cvStyleInjected: boolean;
+    _msgCache: Map<string, string>;
+    _lastMsgCount: number;
+    _hasScrolledInit: boolean;
+    _pendingScroll: boolean;
+    _chatObserver: IntersectionObserver | null;
+    _chatPageObserver: ResizeObserver | null;
+  }
+}
+
+declare module 'howler' {
+  interface HowlerGlobal {
+    _obtainHtml5Audio: () => HTMLAudioElement;
+    _html5AudioPool: HTMLAudioElement[];
+    _unlockAudio: () => void;
+  }
+}
+
 if (typeof Howler !== 'undefined') {
   Howler._obtainHtml5Audio = function () {
     var self = this || Howler;
     if (self._html5AudioPool.length) {
-      return self._html5AudioPool.pop();
+      return self._html5AudioPool.pop() as HTMLAudioElement;
     }
     return new Audio();
   };
@@ -28,11 +81,15 @@ if (typeof Howler !== 'undefined') {
   const originalUnlock = Howler._unlockAudio;
   Howler._unlockAudio = function () {
     const origAdd = document.addEventListener;
-    document.addEventListener = function (type, listener, options) {
+    document.addEventListener = function (
+      type: string,
+      listener: EventListenerOrEventListenerObject,
+      options?: boolean | AddEventListenerOptions,
+    ) {
       if (type === 'touchstart') return;
       origAdd.call(document, type, listener, options);
     };
-    originalUnlock.apply(this, arguments);
+    originalUnlock.apply(this, arguments as any);
     document.addEventListener = origAdd;
   };
 }
@@ -45,11 +102,11 @@ rootStyle.setProperty('--font-user', `"${userCss.family}", cursive`);
 rootStyle.setProperty('--font-narration', `"${narrCss.family}", serif`);
 rootStyle.setProperty('--font-ui-sans', `"${userCss.family}", cursive`);
 
-window.applyCharacterFonts = function (html) {
+window.applyCharacterFonts = function (html: string) {
   html = html.replace(
     /([\'"‘“『「])\s*([LQC])[:：]\s*([\s\S]*?)([\'"’”』」]|$)/g,
-    (match, openQ, role, content, closeQ) => {
-      const roleMap = { L: 'msg-lin', Q: 'msg-qin', C: 'msg-children' };
+    (_match: string, openQ: string, role: string, content: string, closeQ: string) => {
+      const roleMap: Record<string, string> = { L: 'msg-lin', Q: 'msg-qin', C: 'msg-children' };
       const cls = roleMap[role.toUpperCase()];
       return `${openQ}<span class="${cls}">${content}</span>${closeQ}`;
     },
@@ -57,8 +114,8 @@ window.applyCharacterFonts = function (html) {
   return html;
 };
 
-window.parseMD = function (str) {
-  return DOMPurify.sanitize(marked.parse(str));
+window.parseMD = function (str: string) {
+  return DOMPurify.sanitize(marked.parse(str) as string);
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -73,7 +130,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           return response.text();
         })
         .then((html) => {
-          document.getElementById(`page-${index}`).innerHTML = html;
+          const el = document.getElementById(`page-${index}`);
+          if (el) el.innerHTML = html;
         }),
     );
     await Promise.all(fetchPromises);
@@ -98,10 +156,12 @@ function initApp() {
   const root = document.documentElement;
 
   const spiralContainer = document.getElementById('spirals');
-  for (let i = 0; i < 14; i++) {
-    let ring = document.createElement('div');
-    ring.className = 'spiral-ring';
-    spiralContainer.appendChild(ring);
+  if (spiralContainer) {
+    for (let i = 0; i < 14; i++) {
+      let ring = document.createElement('div');
+      ring.className = 'spiral-ring';
+      spiralContainer.appendChild(ring);
+    }
   }
 
   window.closeBook = function () {
@@ -126,14 +186,14 @@ function initApp() {
     tab.addEventListener('click', () => {
       tabs.forEach((t) => t.classList.remove('active'));
       tab.classList.add('active');
-      const targetIndex = parseInt(tab.getAttribute('data-index'));
+      const targetIndex = parseInt(tab.getAttribute('data-index') || '0');
 
       if (targetIndex === 2) {
         generatePlant();
       }
 
       pagesContainer.forEach((page) => {
-        const pageIndex = parseInt(page.getAttribute('data-index'));
+        const pageIndex = parseInt(page.getAttribute('data-index') || '0');
         if (pageIndex < targetIndex || pageIndex === -1) {
           page.classList.add('flipped');
         } else {
@@ -145,8 +205,9 @@ function initApp() {
 
   const lampCord = document.getElementById('lampCord');
   let isDarkMode = false;
-  const toggleDarkMode = (e) => {
+  const toggleDarkMode = (e?: Event) => {
     if (e && e.cancelable) e.preventDefault();
+    if (!lampCord) return;
     lampCord.classList.add('pulled');
     setTimeout(() => {
       lampCord.classList.remove('pulled');
@@ -172,36 +233,40 @@ function initApp() {
         document.startViewTransition(switchTheme);
       } else {
         document.body.style.transition = 'background-color 1.2s ease';
-        const notebook = document.querySelector('.notebook');
+        const notebook = document.querySelector('.notebook') as HTMLElement;
         const pageFronts = document.querySelectorAll('.page-front');
         if (notebook) notebook.style.transition = 'background-color 1.2s ease';
-        pageFronts.forEach((p) => (p.style.transition = 'background-color 1.2s ease'));
+        pageFronts.forEach(
+          (p) => ((p as HTMLElement).style.transition = 'background-color 1.2s ease'),
+        );
 
         switchTheme();
 
         setTimeout(() => {
           document.body.style.transition = '';
           if (notebook) notebook.style.transition = '';
-          pageFronts.forEach((p) => (p.style.transition = ''));
+          pageFronts.forEach((p) => ((p as HTMLElement).style.transition = ''));
         }, 1200);
       }
     }, 350);
   };
-  lampCord.addEventListener('mousedown', toggleDarkMode);
-  lampCord.addEventListener('touchstart', toggleDarkMode);
+  if (lampCord) {
+    lampCord.addEventListener('mousedown', toggleDarkMode);
+    lampCord.addEventListener('touchstart', toggleDarkMode);
+  }
 
-  const chatHistory = document.getElementById('chat-history');
-  const calendarBtn = document.getElementById('calendarBtn');
-  const backToLatestBtn = document.getElementById('backToLatestBtn');
-  const chatInput = document.getElementById('chatInput');
-  const sendBtn = document.getElementById('sendBtn');
+  const chatHistory = document.getElementById('chat-history') as HTMLElement;
+  const calendarBtn = document.getElementById('calendarBtn') as HTMLElement;
+  const backToLatestBtn = document.getElementById('backToLatestBtn') as HTMLElement;
+  const chatInput = document.getElementById('chatInput') as HTMLInputElement;
+  const sendBtn = document.getElementById('sendBtn') as HTMLElement;
 
   if (calendarBtn && backToLatestBtn) {
     let isJumping = false;
     let lastViewedYear = new Date().getFullYear();
     let lastViewedMonth = new Date().getMonth();
 
-    const handleMonthOrYearChange = function (sd, ds, instance) {
+    const handleMonthOrYearChange = function (_sd: any, _ds: any, instance: any) {
       if (isJumping || !window.availableDatesArr || window.availableDatesArr.length === 0) return;
 
       let dir = 1;
@@ -245,7 +310,7 @@ function initApp() {
       locale: Mandarin,
       disableMobile: true,
       enable: [],
-      onOpen: function (sd, ds, instance) {
+      onOpen: function (_sd, _ds, instance) {
         lastViewedYear = instance.currentYear;
         lastViewedMonth = instance.currentMonth;
       },
@@ -254,10 +319,9 @@ function initApp() {
       onChange: function (selectedDates, dateStr) {
         if (!selectedDates.length) return;
 
-        const messages = Array.from(chatHistory.children).filter(
-          (el) => el.dataset && el.dataset.date,
-        );
-        let targetNode = messages.find((el) => el.dataset.date === dateStr);
+        const messages = Array.from(chatHistory.children) as HTMLElement[];
+        const filtered = messages.filter((el) => el.dataset && el.dataset.date);
+        let targetNode = filtered.find((el) => el.dataset.date === dateStr);
 
         if (targetNode) {
           chatHistory.scrollTo({ top: targetNode.offsetTop - 15, behavior: 'smooth' });
@@ -272,7 +336,12 @@ function initApp() {
       chatInput.style.display = 'block';
       sendBtn.style.display = 'block';
       backToLatestBtn.style.display = 'none';
-      if (chatHistory) chatHistory.scrollTo({ top: chatHistory.scrollHeight, behavior: 'smooth' });
+
+      setTimeout(() => {
+        if (chatHistory) {
+          chatHistory.scrollTo({ top: chatHistory.scrollHeight, behavior: 'smooth' });
+        }
+      }, 100);
     });
   }
 
@@ -343,7 +412,6 @@ function initApp() {
 
     const randomCard = tarotDeck[Math.floor(Math.random() * tarotDeck.length)];
     const isReversed = Math.random() > 0.5;
-    const orientation = isReversed ? '逆位 (Reversed)' : '正位 (Upright)';
     const cnOrientation = isReversed ? '逆位' : '正位';
 
     const wrapper = document.createElement('div');
@@ -375,7 +443,12 @@ function initApp() {
     globalOverlay.appendChild(wrapper);
   };
 
-  window.syncTarotToAI = function (cnName, enName, orientation, element) {
+  window.syncTarotToAI = function (
+    cnName: string,
+    enName: string,
+    orientation: string,
+    element: HTMLElement,
+  ) {
     if (element.dataset.synced === 'true') return;
     element.dataset.synced = 'true';
     window.currentTarotFlipped = true;
@@ -408,7 +481,7 @@ function initApp() {
     window.closeGlobalOverlay();
   };
 
-  const chatInputWrapper = document.querySelector('.input-wrapper');
+  const chatInputWrapper = document.querySelector('.input-wrapper') as HTMLElement;
   if (chatInputWrapper && chatHistory) {
     new ResizeObserver(() => {
       chatHistory.style.paddingBottom = chatInputWrapper.offsetHeight + 15 + 'px';
@@ -418,7 +491,7 @@ function initApp() {
   window.closeScaleOverlay = function (title, isDone) {
     if (!isDone) {
       const qs = document.querySelectorAll('.scale-q');
-      let details = [];
+      let details: string[] = [];
       let answeredCount = 0;
       let totalCount = qs.length;
 
@@ -428,13 +501,15 @@ function initApp() {
           window.parent.postMessage({ type: 'ADD_TEMP_PROMPT', text: report }, '*');
       } else {
         qs.forEach((qDiv, idx) => {
-          let qTextEl = qDiv.querySelector('.scale-q-text');
+          let qTextEl = qDiv.querySelector('.scale-q-text') as HTMLElement;
           let qText = qTextEl ? qTextEl.innerText.replace(/^\d+\.\s*/, '') : '未知题目';
-          const checkedInput = qDiv.querySelector('input[type="radio"]:checked');
+          const checkedInput = qDiv.querySelector(
+            'input[type="radio"]:checked',
+          ) as HTMLInputElement;
 
           if (checkedInput) {
             const labelText = checkedInput.nextElementSibling
-              ? checkedInput.nextElementSibling.innerText
+              ? (checkedInput.nextElementSibling as HTMLElement).innerText
               : '已选';
             details.push(`${idx + 1}. ${qText} —— (已作答：${labelText})`);
             answeredCount++;
@@ -457,8 +532,9 @@ function initApp() {
     const overlay = document.getElementById('global-overlay');
     if (!overlay || !overlay.firstElementChild) return;
 
-    overlay.firstElementChild.style.pointerEvents = 'none';
-    overlay.firstElementChild.style.animation = 'handBackToTop 1s ease-in-out forwards';
+    const firstEl = overlay.firstElementChild as HTMLElement;
+    firstEl.style.pointerEvents = 'none';
+    firstEl.style.animation = 'handBackToTop 1s ease-in-out forwards';
 
     setTimeout(() => {
       overlay.innerHTML = '';
@@ -491,7 +567,7 @@ function initApp() {
 
     const optionsHTML = scale.options
       .map(
-        (opt) =>
+        (opt: any) =>
           `<label class="opt-label"><input type="radio" value="${opt.value}"><span>${opt.label}</span></label>`,
       )
       .join('');
@@ -506,7 +582,7 @@ function initApp() {
       <div class="scale-questions-container">
         ${scale.questions
           .map(
-            (q, idx) => `
+            (q: any, idx: number) => `
           <div class="scale-q" data-idx="${idx}">
             <div class="scale-q-text">${idx + 1}. ${q.q}</div>
             <div class="scale-options" data-factor="${q.f || ''}" data-idx="${idx}">
@@ -522,12 +598,13 @@ function initApp() {
 
     globalOverlay.appendChild(wrapper);
 
-    wrapper.addEventListener('change', (e) => {
-      if (e.target.type === 'radio') {
-        const qDiv = e.target.closest('.scale-q');
+    wrapper.addEventListener('change', (e: Event) => {
+      const target = e.target as HTMLInputElement;
+      if (target && target.type === 'radio') {
+        const qDiv = target.closest('.scale-q') as HTMLElement;
         qDiv.classList.add('answered');
 
-        const labels = qDiv.querySelectorAll('.opt-label');
+        const labels = qDiv.querySelectorAll<HTMLElement>('.opt-label');
         labels.forEach((l) => {
           l.classList.remove('circled-option');
           l.style.removeProperty('--rand-rot');
@@ -536,7 +613,8 @@ function initApp() {
           l.style.removeProperty('--rand-br');
         });
 
-        const label = e.target.closest('label');
+        const label = target.closest('label') as HTMLElement;
+        if (!label) return;
 
         const rot = (Math.random() * 16 - 8).toFixed(1);
         const w = (Math.random() * 15 + 105).toFixed(1);
@@ -554,13 +632,13 @@ function initApp() {
 
         const totalQs = scale.questions.length;
         const answeredQs = wrapper.querySelectorAll('.scale-q.answered').length;
-        const submitBtn = document.getElementById('submitScaleBtn');
+        const submitBtn = document.getElementById('submitScaleBtn') as HTMLElement;
 
-        if (answeredQs === totalQs) {
+        if (submitBtn && answeredQs === totalQs) {
           submitBtn.classList.remove('incomplete');
           submitBtn.removeAttribute('disabled');
           submitBtn.innerText = '完成评估，同步给林医生';
-        } else {
+        } else if (submitBtn) {
           submitBtn.classList.add('incomplete');
           submitBtn.setAttribute('disabled', 'true');
           submitBtn.innerText = `还有 ${totalQs - answeredQs} 道题未完成...`;
@@ -568,56 +646,60 @@ function initApp() {
       }
     });
 
-    document.getElementById('submitScaleBtn').onclick = () => {
-      let totalScore = 0;
-      let factorScores = {};
-      let allAnswered = true;
-      let details = [];
-      if (scale.factors) for (let k in scale.factors) factorScores[k] = 0;
+    const submitBtnEl = document.getElementById('submitScaleBtn');
+    if (submitBtnEl)
+      submitBtnEl.onclick = () => {
+        let totalScore = 0;
+        let factorScores: Record<string, number> = {};
+        let allAnswered = true;
+        let details: string[] = [];
+        if (scale.factors) for (let k in scale.factors) factorScores[k] = 0;
 
-      scale.questions.forEach((q, idx) => {
-        const checkedInput = document.querySelector(`input[name="sq${idx}"]:checked`);
-        if (!checkedInput) {
-          allAnswered = false;
-          return;
+        scale.questions.forEach((q: any, idx: number) => {
+          const checkedInput = document.querySelector(
+            `input[name="sq${idx}"]:checked`,
+          ) as HTMLInputElement;
+          if (!checkedInput) {
+            allAnswered = false;
+            return;
+          }
+          let val = parseInt(checkedInput.value);
+          let labelText = (checkedInput.nextElementSibling as HTMLElement).innerText;
+          totalScore += val;
+          if (q.f && factorScores[q.f] !== undefined) factorScores[q.f] += val;
+
+          details.push(`${idx + 1}. ${q.q}\n答：${labelText} (${val}分)`);
+        });
+
+        if (!allAnswered) return;
+
+        let report = `系统提示：来访者已完成《${scale.title}》。\n\n【得分情况】\n总计得分: ${totalScore}\n`;
+        if (scale.factors) {
+          report += `各维度分布:\n`;
+          for (let k in scale.factors) {
+            report += `- ${scale.factors[k].name}: ${factorScores[k]}\n`;
+          }
         }
-        let val = parseInt(checkedInput.value);
-        let labelText = checkedInput.nextElementSibling.innerText;
-        totalScore += val;
-        if (q.f && factorScores[q.f] !== undefined) factorScores[q.f] += val;
 
-        details.push(`${idx + 1}. ${q.q}\n答：${labelText} (${val}分)`);
-      });
+        report += `\n【详细答题情况】\n${details.join('\n\n')}`;
 
-      if (!allAnswered) return;
-
-      let report = `系统提示：来访者已完成《${scale.title}》。\n\n【得分情况】\n总计得分: ${totalScore}\n`;
-      if (scale.factors) {
-        report += `各维度分布:\n`;
-        for (let k in scale.factors) {
-          report += `- ${scale.factors[k].name}: ${factorScores[k]}\n`;
+        if (scale.reference) {
+          report += `\n\n${scale.reference}`;
         }
-      }
 
-      report += `\n【详细答题情况】\n${details.join('\n\n')}`;
+        report += `\n\n[系统指令]：这是来访者刚刚填写的问卷完整结果。`;
 
-      if (scale.reference) {
-        report += `\n\n${scale.reference}`;
-      }
+        if (window.parent !== window) {
+          window.parent.postMessage(
+            {
+              type: 'ADD_TEMP_PROMPT',
+              text: report,
+            },
+            '*',
+          );
+        }
 
-      report += `\n\n[系统指令]：这是来访者刚刚填写的问卷完整结果。`;
-
-      if (window.parent !== window) {
-        window.parent.postMessage(
-          {
-            type: 'ADD_TEMP_PROMPT',
-            text: report,
-          },
-          '*',
-        );
-      }
-
-      globalOverlay.innerHTML = `
+        globalOverlay.innerHTML = `
         <div class="scale-notebook scale-done-notebook">
           <div class="scale-close-btn" onclick="window.closeGlobalOverlay()">×</div>
           <h2 class="scale-done-title">评估已完成 ✨</h2>
@@ -626,7 +708,7 @@ function initApp() {
           <button class="notebook-btn submit-btn" onclick="window.closeGlobalOverlay()">合上报告</button>
         </div>
       `;
-    };
+      };
   };
 
   window.isGenerating = false;
@@ -673,16 +755,17 @@ function initApp() {
     }
   });
 
-  chatInput.addEventListener('input', (e) => {
-    e.target.style.height = 'auto';
-    e.target.style.height = e.target.scrollHeight + 'px';
+  chatInput.addEventListener('input', (e: Event) => {
+    const target = e.target as HTMLInputElement;
+    target.style.height = 'auto';
+    target.style.height = target.scrollHeight + 'px';
     if (window.parent !== window) {
-      window.parent.postMessage({ type: 'SYNC_INPUT_TO_ST', text: e.target.value }, '*');
+      window.parent.postMessage({ type: 'SYNC_INPUT_TO_ST', text: target.value }, '*');
     }
   });
 
   window.adjustTabs = function () {
-    const tabs = Array.from(document.querySelectorAll('.tab'));
+    const tabs = Array.from(document.querySelectorAll<HTMLElement>('.tab'));
     const notebook = document.querySelector('.notebook');
     if (!notebook) return;
 
@@ -764,7 +847,7 @@ function initApp() {
       '十二月',
     ];
 
-    const pC = [
+    const pC: any[] = [
       {
         arch: 'vine',
         fType: 'jasmine',
@@ -979,11 +1062,11 @@ function initApp() {
     }
 
     if (!selectedVar && month === 1 && date.getDate() === 24) {
-      selectedVar = cfg.vars.find((v) => v.n === '林涵霁雨');
+      selectedVar = cfg.vars.find((v: any) => v.n === '林涵霁雨');
     }
 
     if (!selectedVar) {
-      let totalWeight = cfg.vars.reduce((sum, v) => sum + v.w, 0);
+      let totalWeight = cfg.vars.reduce((sum: number, v: any) => sum + v.w, 0);
       let randomSpin = Math.random() * totalWeight;
       for (let v of cfg.vars) {
         if (randomSpin < v.w) {
@@ -999,7 +1082,7 @@ function initApp() {
     cfg.name = selectedVar.n;
     if (selectedVar.tCol) cfg.tCol = selectedVar.tCol;
     if (selectedVar.lCol) cfg.lCol = selectedVar.lCol;
-    cfg.m = selectedVar.m || {};
+    cfg.m = (selectedVar as any).m || {};
 
     let svgContent = `
       <svg viewBox="-20 -20 440 690" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" class="botany-svg" style="overflow: visible;">
@@ -1017,13 +1100,23 @@ function initApp() {
       <g transform="translate(200, 620) scale(1.8)">
     `;
 
-    let paths = [];
-    let organs = [];
+    let paths: string[] = [];
+    let organs: string[] = [];
 
     const rcSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     const rc = rough.svg(rcSvg);
 
-    function addStem(x1, y1, cx, cy, x2, y2, width, color, delay) {
+    function addStem(
+      x1: number,
+      y1: number,
+      cx: number,
+      cy: number,
+      x2: number,
+      y2: number,
+      width: number,
+      color: string,
+      delay: number,
+    ) {
       let len = Math.hypot(x2 - x1, y2 - y1) * 1.5;
       let d = `M ${x1.toFixed(1)},${y1.toFixed(1)} Q ${cx.toFixed(1)},${cy.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}`;
 
@@ -1042,8 +1135,8 @@ function initApp() {
       paths.push(node.outerHTML);
     }
 
-    function getLeafPath(shape) {
-      const dict = {
+    function getLeafPath(shape: string) {
+      const dict: Record<string, string> = {
         willow: 'M0,0 C-4,-15 -4,-35 0,-45 C4,-35 4,-15 0,0 Z',
         sword: 'M0,0 Q-10,-40 0,-100 Q10,-40 0,0 Z',
         lotus: 'M0,-10 C-35,-10 -45,-35 0,-45 C45,-35 35,-10 0,-10 Z',
@@ -1057,7 +1150,7 @@ function initApp() {
       return dict[shape] || '';
     }
 
-    function addLeaf(x, y, angle, scale, delay) {
+    function addLeaf(x: number, y: number, angle: number, scale: number, delay: number) {
       if (cfg.lShape === 'none') return;
       let path = getLeafPath(cfg.lShape);
 
@@ -1075,12 +1168,19 @@ function initApp() {
       </g>`);
     }
 
-    function addFlower(x, y, angle, scale, delay) {
+    function addFlower(x: number, y: number, angle: number, scale: number, delay: number) {
       let fHtml = '';
       let c1 = cfg.fCol[0];
       let c2 = cfg.fCol[1] || c1;
 
-      const rP = (d, fill, stroke, rot, s, op) => {
+      const rP = (
+        d: string,
+        fill: string,
+        stroke?: string | null,
+        rot?: number,
+        s?: number,
+        op?: number,
+      ) => {
         let n = rc.path(d, {
           fill: fill,
           stroke: stroke || 'none',
@@ -1090,10 +1190,19 @@ function initApp() {
           hachureGap: 2.5,
         });
         if (rot || s) n.setAttribute('transform', `rotate(${rot || 0}) scale(${s || 1})`);
-        if (op) n.setAttribute('opacity', op);
+        if (op) n.setAttribute('opacity', op.toString());
         return n.outerHTML;
       };
-      const rC = (cx, cy, r, fill, stroke, rot, s, op) => {
+      const rC = (
+        cx: number,
+        cy: number,
+        r: number,
+        fill: string,
+        stroke?: string | null,
+        rot?: number,
+        s?: number,
+        op?: number,
+      ) => {
         let n = rc.circle(cx, cy, r * 2, {
           fill: fill,
           stroke: stroke || 'none',
@@ -1102,10 +1211,20 @@ function initApp() {
           roughness: 1.5,
         });
         if (rot || s) n.setAttribute('transform', `rotate(${rot || 0}) scale(${s || 1})`);
-        if (op) n.setAttribute('opacity', op);
+        if (op) n.setAttribute('opacity', op.toString());
         return n.outerHTML;
       };
-      const rE = (cx, cy, rx, ry, fill, stroke, rot, s, op) => {
+      const rE = (
+        cx: number,
+        cy: number,
+        rx: number,
+        ry: number,
+        fill: string,
+        stroke?: string | null,
+        rot?: number,
+        s?: number,
+        op?: number,
+      ) => {
         let n = rc.ellipse(cx, cy, rx * 2, ry * 2, {
           fill: fill,
           stroke: stroke || 'none',
@@ -1114,7 +1233,7 @@ function initApp() {
           roughness: 1.5,
         });
         if (rot || s) n.setAttribute('transform', `rotate(${rot || 0}) scale(${s || 1})`);
-        if (op) n.setAttribute('opacity', op);
+        if (op) n.setAttribute('opacity', op.toString());
         return n.outerHTML;
       };
 
@@ -1210,7 +1329,15 @@ function initApp() {
       );
     }
 
-    function buildTree(x, y, angle, length, depth, width, delay) {
+    function buildTree(
+      x: number,
+      y: number,
+      angle: number,
+      length: number,
+      depth: number,
+      width: number,
+      delay: number,
+    ) {
       if (depth === 0) return;
       let x2 = x + Math.sin(angle) * length;
       let y2 = y - Math.cos(angle) * length;
@@ -1449,7 +1576,7 @@ function initApp() {
 
     requestAnimationFrame(() => {
       container.innerHTML = svgContent;
-      label.innerText = `${monthNames[month]} · ${cfg.name}`;
+      if (label) label.innerText = `${monthNames[month]} · ${cfg.name}`;
     });
     plantGenerated = true;
   }
@@ -1514,7 +1641,7 @@ function initApp() {
     timePeriod = 'evening';
   }
 
-  function parseFileName(filename) {
+  function parseFileName(filename: string) {
     const rawName = filename.replace('.mp3', '');
     const parts = rawName.split('-');
 
@@ -1527,7 +1654,7 @@ function initApp() {
     return { artist: artist, title: title };
   }
 
-  let playlist = filesMap[timePeriod].map((filename) => {
+  let playlist = (filesMap as any)[timePeriod].map((filename: string) => {
     const info = parseFileName(filename);
     return {
       artist: info.artist,
@@ -1539,13 +1666,13 @@ function initApp() {
   const storageKey = `LinAudio_${timePeriod}`;
   const globalStorageKey = `LinUI_GlobalSettings`;
 
-  let globalSettings = JSON.parse(localStorage.getItem(globalStorageKey)) || {
+  let globalSettings = JSON.parse(localStorage.getItem(globalStorageKey) || 'null') || {
     vol: 30,
     fontSize: 15,
     turnSpeed: 6,
   };
 
-  let playerSettings = JSON.parse(localStorage.getItem(storageKey)) || {
+  let playerSettings = JSON.parse(localStorage.getItem(storageKey) || 'null') || {
     mode: 1,
     disabled: [],
   };
@@ -1612,7 +1739,7 @@ function initApp() {
       });
     });
 
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
     const retina = Math.min(2, window.devicePixelRatio || 1);
     let w = window.innerWidth;
     let h = window.innerHeight;
@@ -1628,24 +1755,31 @@ function initApp() {
     ];
 
     class Vector2 {
-      constructor(x, y) {
+      x: number;
+      y: number;
+      constructor(x: number, y: number) {
         this.x = x;
         this.y = y;
       }
     }
     class EulerMass {
-      constructor(x, y, mass, drag) {
+      pos: Vector2;
+      mass: number;
+      drag: number;
+      force: Vector2;
+      vel: Vector2;
+      constructor(x: number, y: number, mass: number, drag: number) {
         this.pos = new Vector2(x, y);
         this.mass = mass;
         this.drag = drag;
         this.force = new Vector2(0, 0);
         this.vel = new Vector2(0, 0);
       }
-      AddForce(fx, fy) {
+      AddForce(fx: number, fy: number) {
         this.force.x += fx;
         this.force.y += fy;
       }
-      Integrate(dt) {
+      Integrate(dt: number) {
         let speed = Math.sqrt(this.vel.x * this.vel.x + this.vel.y * this.vel.y);
         let accX = (this.force.x - this.drag * this.mass * this.vel.x * speed) / this.mass;
         let accY = (this.force.y - this.drag * this.mass * this.vel.y * speed) / this.mass;
@@ -1659,7 +1793,22 @@ function initApp() {
     }
 
     class ConfettiRibbon {
-      constructor(x, y) {
+      particleCount: number;
+      particleDist: number;
+      particles: EulerMass[];
+      front: string;
+      back: string;
+      xOff: number;
+      yOff: number;
+      pos: Vector2;
+      prevPos: Vector2;
+      velInherit: number;
+      time: number;
+      oscSpeed: number;
+      oscDist: number;
+      ySpeed: number;
+
+      constructor(x: number, y: number) {
         this.particleCount = 20;
         this.particleDist = 8.0;
         this.particles = [];
@@ -1679,7 +1828,7 @@ function initApp() {
           this.particles.push(new EulerMass(x, y - i * this.particleDist, 1, 0.05));
         }
       }
-      update(dt) {
+      update(dt: number) {
         this.time += dt * this.oscSpeed;
         this.pos.y += this.ySpeed * dt;
         this.pos.x += Math.cos(this.time) * this.oscDist * dt;
@@ -1751,6 +1900,19 @@ function initApp() {
     }
 
     class Paper {
+      pos: { x: number; y: number };
+      rotationSpeed: number;
+      angle: number;
+      rotation: number;
+      size: number;
+      oscSpeed: number;
+      xSpeed: number;
+      ySpeed: number;
+      time: number;
+      front: string;
+      back: string;
+      corners: { x: number; y: number }[];
+
       constructor() {
         this.pos = { x: Math.random() * w, y: Math.random() * -h };
         this.rotationSpeed = Math.random() * 600 + 800;
@@ -1769,7 +1931,7 @@ function initApp() {
           y: Math.sin(this.angle + DEG_TO_RAD * (i * 90 + 45)),
         }));
       }
-      update(dt) {
+      update(dt: number) {
         this.time += dt;
         this.rotation += this.rotationSpeed * dt;
         this.pos.x += Math.cos(this.time * this.oscSpeed) * this.xSpeed * dt;
@@ -1793,7 +1955,7 @@ function initApp() {
       }
     }
 
-    const entities = [];
+    const entities: any[] = [];
     const paperCount = w < 768 ? 20 : 40;
     const ribbonCount = w < 768 ? 8 : 16;
     for (let i = 0; i < paperCount; i++) entities.push(new Paper());
@@ -1801,7 +1963,7 @@ function initApp() {
       entities.push(new ConfettiRibbon(Math.random() * w, -Math.random() * h * 2));
 
     let lastTime = Date.now();
-    let rafId;
+    let rafId: any;
     let isStopping = false;
 
     function animate() {
@@ -1866,9 +2028,9 @@ function initApp() {
     }
   }
 
-  function initPresent(container, THREE) {
+  function initPresent(container: any, THREE: any) {
     container.innerHTML = '';
-    let scene, camera, renderer, present, rafId;
+    let scene: any, camera: any, renderer: any, present: any;
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
     let intersects = [];
@@ -1900,6 +2062,14 @@ function initApp() {
     scene.add(dirLight);
 
     class Present {
+      mesh: any;
+      opening: boolean;
+      opened: boolean;
+      openTime: number;
+      opacity: number;
+      pieces: any[];
+      bow: any;
+
       constructor() {
         this.mesh = new THREE.Object3D();
         this.opening = false;
@@ -1926,7 +2096,7 @@ function initApp() {
           transparent: true,
         });
 
-        const rand = (min, max) => Math.random() * (max - min) + min;
+        const rand = (min: number, max: number) => Math.random() * (max - min) + min;
 
         for (let s = 0; s < 6; ++s) {
           let side = new THREE.Object3D();
@@ -2008,7 +2178,7 @@ function initApp() {
         } else if (this.opened) {
           if (this.opacity > 0) {
             this.opacity -= 0.03;
-            this.pieces.forEach((e) => {
+            this.pieces.forEach((e: any) => {
               e.position.add(e.vel);
               e.rotation.x += e.rotSpeed.x;
               e.rotation.y += e.rotSpeed.y;
@@ -2042,7 +2212,7 @@ function initApp() {
 
     let idleFrames = 0;
     function animate() {
-      rafId = requestAnimationFrame(animate);
+      requestAnimationFrame(animate);
       if (present) {
         present.update();
         if (!present.opening && present.opened) {
@@ -2056,7 +2226,7 @@ function initApp() {
     }
     animate();
 
-    const handleInteract = (e) => {
+    const handleInteract = (e: any) => {
       let cx = e.clientX || (e.touches && e.touches[0].clientX);
       let cy = e.clientY || (e.touches && e.touches[0].clientY);
       if (!cx || !cy) return;
@@ -2097,11 +2267,10 @@ function initApp() {
   }
 
   let currentTrackIndex = 0;
-  let playHistory = [];
-  let currentHowl = null;
-  let currentSoundId = null;
+  let playHistory: number[] = [];
+  let currentHowl: any = null;
   let isPlaying = false;
-  let progressAnimationFrame = null;
+  let progressAnimationFrame: any = null;
 
   let hasInteracted = false;
   const unlockAudio = () => {
@@ -2113,13 +2282,19 @@ function initApp() {
   };
   ['click', 'touchstart', 'keydown'].forEach((evt) => document.addEventListener(evt, unlockAudio));
 
-  function customFade(howlObj, from, to, duration, onComplete) {
+  function customFade(
+    howlObj: any,
+    from: number,
+    to: number,
+    duration: number,
+    onComplete?: () => void,
+  ) {
     if (!howlObj) return;
     if (howlObj._customFadeId) cancelAnimationFrame(howlObj._customFadeId);
 
     const startTime = performance.now();
 
-    function update(currentTime) {
+    function update(currentTime: number) {
       const elapsed = currentTime - startTime;
       let t = Math.min(elapsed / duration, 1);
 
@@ -2144,26 +2319,25 @@ function initApp() {
     howlObj._customFadeId = requestAnimationFrame(update);
   }
 
-  const pPlayBtn = document.getElementById('btn-play');
-  const pPrevBtn = document.getElementById('btn-prev');
-  const pNextBtn = document.getElementById('btn-next');
-  const pModeBtn = document.getElementById('btn-mode');
-  const pControlPanel = document.getElementById('player-control-panel');
-  const pInfoBar = document.getElementById('player-info');
-  const pBar = document.getElementById('p-bar');
-  const pProgressBar = document.getElementById('p-progress-bar');
-  const trackArtist = document.getElementById('track-artist');
-  const trackName = document.getElementById('track-name');
-  const volumeSlider = document.getElementById('volumeSlider');
-  const autoPlaySwitch = document.getElementById('autoPlaySwitch');
-  const autoOpenSwitch = document.getElementById('autoOpenSwitch');
-  const sysFontSwitch = document.getElementById('sysFontSwitch');
-  const albumArt = document.getElementById('album-art');
+  const pPlayBtn = document.getElementById('btn-play') as HTMLElement;
+  const pPrevBtn = document.getElementById('btn-prev') as HTMLElement;
+  const pNextBtn = document.getElementById('btn-next') as HTMLElement;
+  const pModeBtn = document.getElementById('btn-mode') as HTMLElement;
+  const pControlPanel = document.getElementById('player-control-panel') as HTMLElement;
+  const pInfoBar = document.getElementById('player-info') as HTMLElement;
+  const pProgressBar = document.getElementById('p-progress-bar') as HTMLElement;
+  const trackArtist = document.getElementById('track-artist') as HTMLElement;
+  const trackName = document.getElementById('track-name') as HTMLElement;
+  const volumeSlider = document.getElementById('volumeSlider') as HTMLInputElement;
+  const autoPlaySwitch = document.getElementById('autoPlaySwitch') as HTMLInputElement;
+  const autoOpenSwitch = document.getElementById('autoOpenSwitch') as HTMLInputElement;
+  const sysFontSwitch = document.getElementById('sysFontSwitch') as HTMLInputElement;
+  const albumArt = document.getElementById('album-art') as HTMLElement;
 
   if (albumArt) albumArt.className = `p-album-art ${timePeriod}`;
   if (volumeSlider) volumeSlider.value = playerSettings.vol;
 
-  function formatTime(secs) {
+  function formatTime(secs: number) {
     if (isNaN(secs) || secs < 0) return '00:00';
     const minutes = Math.floor(secs / 60);
     const seconds = Math.floor(secs % 60);
@@ -2174,7 +2348,7 @@ function initApp() {
     const container = document.getElementById('playlist-container');
     if (!container) return;
     container.innerHTML = playlist
-      .map((track, idx) => {
+      .map((track: any, idx: number) => {
         const isDisabled = playerSettings.disabled.includes(track.src);
         const isActive = idx === currentTrackIndex;
         const eyeIcon = isDisabled ? '🙉' : '🎵️';
@@ -2191,9 +2365,9 @@ function initApp() {
       .join('');
 
     setTimeout(() => {
-      container.querySelectorAll('.li-title, .li-artist').forEach((el) => {
+      container.querySelectorAll<HTMLElement>('.li-title, .li-artist').forEach((el) => {
         const parent = el.parentElement;
-        if (el.scrollWidth > parent.clientWidth) {
+        if (parent && el.scrollWidth > parent.clientWidth) {
           const text = el.innerText;
           el.innerHTML = `<marquee scrollamount="2" behavior="scroll" direction="left" class="marquee-text">${text}</marquee>`;
         }
@@ -2202,13 +2376,15 @@ function initApp() {
 
     container.querySelectorAll('.playlist-item').forEach((item) => {
       item.addEventListener('click', (e) => {
-        const idx = parseInt(item.getAttribute('data-idx'));
+        const idx = parseInt(item.getAttribute('data-idx') || '0');
         const trackSrc = playlist[idx].src;
 
-        if (e.target.closest('.li-toggle')) {
+        if ((e.target as HTMLElement)?.closest('.li-toggle')) {
           e.stopPropagation();
           if (playerSettings.disabled.includes(trackSrc)) {
-            playerSettings.disabled = playerSettings.disabled.filter((src) => src !== trackSrc);
+            playerSettings.disabled = playerSettings.disabled.filter(
+              (src: string) => src !== trackSrc,
+            );
             console.log(`[Lin Debug][恢复] ${playlist[idx].name}`);
           } else {
             playerSettings.disabled.push(trackSrc);
@@ -2236,14 +2412,14 @@ function initApp() {
   }
 
   function getValidIndices() {
-    let valid = [];
-    playlist.forEach((t, i) => {
+    let valid: number[] = [];
+    playlist.forEach((t: any, i: number) => {
       if (!playerSettings.disabled.includes(t.src)) valid.push(i);
     });
     return valid;
   }
 
-  function getNextValidIndex(currentIndex, direction = 1) {
+  function getNextValidIndex(currentIndex: number, direction = 1) {
     let valid = getValidIndices();
     if (valid.length === 0) return -1;
 
@@ -2291,44 +2467,44 @@ function initApp() {
     updateModeUI();
   }
 
-  function bindHowlEvents(howlObj, autoStart) {
-    howlObj.on('load', function () {
+  function bindHowlEvents(howlObj: any, autoStart: boolean) {
+    howlObj.on('load', () => {
       const tTot = document.getElementById('p-time-total');
-      if (tTot) tTot.innerText = formatTime(this.duration());
+      if (tTot) tTot.innerText = formatTime(howlObj.duration());
       if (autoStart && hasInteracted) playTrack();
     });
-    howlObj.on('play', function () {
+    howlObj.on('play', () => {
       isPlaying = true;
       updateUI(true);
 
-      customFade(this, this.volume(), 1, 1000);
+      customFade(howlObj, howlObj.volume(), 1, 1000);
 
       if (progressAnimationFrame) clearTimeout(progressAnimationFrame);
       progressAnimationFrame = setTimeout(stepProgress, 500);
     });
-    howlObj.on('pause', function () {
+    howlObj.on('pause', () => {
       isPlaying = false;
       updateUI(false);
     });
-    howlObj.on('stop', function () {
+    howlObj.on('stop', () => {
       isPlaying = false;
       updateUI(false);
     });
-    howlObj.on('end', function () {
+    howlObj.on('end', () => {
       if (autoPlaySwitch && autoPlaySwitch.checked) playNext(true);
       else {
         isPlaying = false;
         updateUI(false);
       }
     });
-    howlObj.on('loaderror', function (id, err) {
+    howlObj.on('loaderror', (_id: number, err: any) => {
       console.error('音频加载失败:', err);
     });
   }
 
-  const fadingHowls = [];
+  const fadingHowls: any[] = [];
 
-  function loadTrack(index, autoStart = false, isPrev = false) {
+  function loadTrack(index: number, autoStart = false, isPrev = false) {
     if (typeof Howl === 'undefined' || typeof Howler === 'undefined') {
       console.warn('[Lin 音乐系统] Howler.js 未加载，播放器进入离线模式。');
       if (trackArtist) trackArtist.innerText = '系统离线';
@@ -2435,7 +2611,7 @@ function initApp() {
     progressAnimationFrame = setTimeout(stepProgress, 500);
   }
 
-  function updateUI(playing) {
+  function updateUI(playing: boolean) {
     if (playing) {
       pControlPanel.classList.add('active');
       pInfoBar.classList.add('active');
@@ -2500,7 +2676,7 @@ function initApp() {
 
     let prevIndex = -1;
     while (playHistory.length > 0) {
-      let idx = playHistory.pop();
+      let idx = playHistory.pop()!;
       if (!playerSettings.disabled.includes(playlist[idx].src)) {
         prevIndex = idx;
         break;
@@ -2545,22 +2721,22 @@ function initApp() {
 
     loadTrack(startIdx, false);
     if (typeof Howler !== 'undefined') {
-      Howler.volume(volumeSlider ? volumeSlider.value / 100 : 0.3);
+      Howler.volume(volumeSlider ? parseInt(volumeSlider.value) / 100 : 0.3);
     }
   } else {
     trackArtist.innerText = '无音乐';
     trackName.innerText = `未找到 ${timePeriod} 时段音乐`;
   }
 
-  const fontSizeSlider = document.getElementById('fontSizeSlider');
-  const vScrollSlider = document.getElementById('vScrollSlider');
-  const turnSpeedSlider = document.getElementById('turnSpeedSlider');
-  const resetSettingsBtn = document.getElementById('resetSettingsBtn');
-  const fsBtn = document.getElementById('fsBtn');
+  const fontSizeSlider = document.getElementById('fontSizeSlider') as HTMLInputElement;
+  const vScrollSlider = document.getElementById('vScrollSlider') as HTMLInputElement;
+  const turnSpeedSlider = document.getElementById('turnSpeedSlider') as HTMLInputElement;
+  const resetSettingsBtn = document.getElementById('resetSettingsBtn') as HTMLElement;
+  const fsBtn = document.getElementById('fsBtn') as HTMLElement;
 
   if (fsBtn) {
     fsBtn.addEventListener('click', () => {
-      document.querySelector('.app-container').classList.toggle('fullscreen-mode');
+      document.querySelector('.app-container')?.classList.toggle('fullscreen-mode');
     });
   }
 
@@ -2570,8 +2746,8 @@ function initApp() {
     if (useSysFont) document.body.classList.add('use-sys-fonts');
 
     sysFontSwitch.addEventListener('change', (e) => {
-      const isChecked = e.target.checked;
-      localStorage.setItem('LinUI_useSysFont', isChecked);
+      const isChecked = (e.target as HTMLInputElement).checked;
+      localStorage.setItem('LinUI_useSysFont', String(isChecked));
       if (isChecked) {
         document.body.classList.add('use-sys-fonts');
       } else {
@@ -2581,9 +2757,9 @@ function initApp() {
   }
 
   if (volumeSlider) {
-    volumeSlider.value = globalSettings.vol;
+    volumeSlider.value = String(globalSettings.vol);
     volumeSlider.addEventListener('input', (e) => {
-      let vol = parseInt(e.target.value);
+      let vol = parseInt((e.target as HTMLInputElement).value);
       Howler.volume(vol / 100);
       globalSettings.vol = vol;
       saveGlobalSettings();
@@ -2591,9 +2767,9 @@ function initApp() {
   }
 
   if (fontSizeSlider) {
-    fontSizeSlider.value = globalSettings.fontSize;
+    fontSizeSlider.value = String(globalSettings.fontSize);
     fontSizeSlider.addEventListener('input', (e) => {
-      let val = parseInt(e.target.value);
+      let val = parseInt((e.target as HTMLInputElement).value);
       root.style.setProperty('--base-font-size', `calc(var(--ui-base-size) + ${val - 15}px)`);
       globalSettings.fontSize = val;
       saveGlobalSettings();
@@ -2605,9 +2781,9 @@ function initApp() {
   }
 
   if (turnSpeedSlider) {
-    turnSpeedSlider.value = globalSettings.turnSpeed;
+    turnSpeedSlider.value = String(globalSettings.turnSpeed);
     turnSpeedSlider.addEventListener('input', (e) => {
-      let val = parseInt(e.target.value);
+      let val = parseInt((e.target as HTMLInputElement).value);
       let speed = Math.max(0.2, 2.2 - val * 0.2).toFixed(2);
       root.style.setProperty('--turn-speed', speed + 's');
       globalSettings.turnSpeed = val;
@@ -2616,9 +2792,9 @@ function initApp() {
   }
 
   if (vScrollSlider) {
-    vScrollSlider.value = globalSettings.vScrollCount || 10;
+    vScrollSlider.value = String(globalSettings.vScrollCount || 10);
     vScrollSlider.addEventListener('input', (e) => {
-      let val = parseInt(e.target.value);
+      let val = parseInt((e.target as HTMLInputElement).value);
       globalSettings.vScrollCount = val;
       saveGlobalSettings();
       if (window._chatObserver) {
@@ -2630,9 +2806,9 @@ function initApp() {
 
   if (resetSettingsBtn) {
     resetSettingsBtn.addEventListener('click', () => {
-      if (volumeSlider) volumeSlider.value = 30;
-      if (fontSizeSlider) fontSizeSlider.value = 15;
-      if (turnSpeedSlider) turnSpeedSlider.value = 6;
+      if (volumeSlider) volumeSlider.value = '30';
+      if (fontSizeSlider) fontSizeSlider.value = '15';
+      if (turnSpeedSlider) turnSpeedSlider.value = '6';
       if (autoPlaySwitch) autoPlaySwitch.checked = true;
       if (autoOpenSwitch) {
         autoOpenSwitch.checked = false;
@@ -2647,7 +2823,7 @@ function initApp() {
       root.style.setProperty('--turn-speed', '1s');
       Howler.volume(0.3);
 
-      if (vScrollSlider) vScrollSlider.value = 10;
+      if (vScrollSlider) vScrollSlider.value = '10';
       globalSettings.vScrollCount = 10;
       globalSettings.vol = 30;
       globalSettings.fontSize = 15;
@@ -2696,7 +2872,7 @@ function initApp() {
   const variantSelect = document.getElementById('dev-plant-variant');
   if (monthSelect && variantSelect) {
     monthSelect.addEventListener('change', () => {
-      const m = parseInt(monthSelect.value);
+      const m = parseInt((monthSelect as HTMLInputElement).value);
       variantSelect.innerHTML = '<option value="-1">🎲 随机品种</option>';
 
       if (!window.PLANT_CONFIG) {
@@ -2710,7 +2886,7 @@ function initApp() {
       }
 
       if (window.PLANT_CONFIG && window.PLANT_CONFIG[m]) {
-        window.PLANT_CONFIG[m].vars.forEach((v, i) => {
+        window.PLANT_CONFIG[m].vars.forEach((v: any, i: number) => {
           variantSelect.innerHTML += `<option value="${i}">${v.n}</option>`;
         });
       }
@@ -2719,12 +2895,13 @@ function initApp() {
   }
 
   window.devTestPlant = function (isRandom = false) {
-    let targetMonth = parseInt(monthSelect.value);
-    let targetVariant = parseInt(variantSelect.value);
+    if (!monthSelect || !variantSelect) return;
+    let targetMonth = parseInt((monthSelect as HTMLInputElement).value);
+    let targetVariant = parseInt((variantSelect as HTMLInputElement).value);
 
     if (isRandom) {
       targetMonth = Math.floor(Math.random() * 12);
-      monthSelect.value = targetMonth;
+      (monthSelect as HTMLInputElement).value = targetMonth.toString();
       monthSelect.dispatchEvent(new Event('change'));
       targetVariant = -1;
     }
@@ -2737,7 +2914,7 @@ function initApp() {
     const origGetId = document.getElementById.bind(document);
     document.getElementById = function (id) {
       if (id === 'svgGarden') return origGetId('dev-plant-container');
-      if (id === 'gardenLabel') return { innerText: '' };
+      if (id === 'gardenLabel') return { innerText: '' } as unknown as HTMLElement;
       return origGetId(id);
     };
 
@@ -2752,9 +2929,9 @@ function initApp() {
     window.__devPlantOverride = null;
   };
 
-  let autoPlantTimer = null;
+  let autoPlantTimer: any = null;
   window.toggleAutoPlant = function () {
-    const btn = document.getElementById('autoPlantBtn');
+    const btn = document.getElementById('autoPlantBtn') as HTMLElement;
     if (autoPlantTimer) {
       clearInterval(autoPlantTimer);
       autoPlantTimer = null;
@@ -2770,11 +2947,11 @@ function initApp() {
     }
   };
 
-  let streamTimeout = null;
+  let streamTimeout: any = null;
 
   window.devTestStream = function () {
     if (streamTimeout) clearTimeout(streamTimeout);
-    const box = document.getElementById('dev-chat-output');
+    const box = document.getElementById('dev-chat-output') as HTMLElement;
     box.innerHTML = '';
 
     const bubble = document.createElement('div');
@@ -2828,7 +3005,7 @@ function initApp() {
   window.devTestNonStream = function () {
     if (streamTimeout) clearTimeout(streamTimeout);
 
-    const box = document.getElementById('dev-chat-output');
+    const box = document.getElementById('dev-chat-output') as HTMLElement;
 
     const rawAiText = `秦渡言坐在他那间刚大扫除过、难得保持着整洁的客厅里，戴着耳机盯着电脑屏幕。音响里正循环播放着一首略带悲伤的情歌。
 
@@ -2877,23 +3054,27 @@ if (patient.feeling === 'depressed') {
   let glassesClicks = 0;
   let devUnlocked = false;
 
-  document.body.addEventListener('click', (e) => {
-    if (e.target.classList.contains('decor-stethoscope')) {
+  document.body.addEventListener('click', (e: Event) => {
+    const target = e.target as HTMLElement;
+    if (target && target.classList.contains('decor-stethoscope')) {
       stethClicks++;
       if (stethClicks === 2) {
         console.log('[Dev] 听诊器就绪 (2/2)');
       }
-    } else if (e.target.classList.contains('decor-glasses')) {
+    } else if (target && target.classList.contains('decor-glasses')) {
       if (stethClicks >= 2 && !devUnlocked) {
         glassesClicks++;
         if (glassesClicks === 24) {
           devUnlocked = true;
           alert('🛠️ 开发者模式已解锁！');
-          document.getElementById('page-4-wrapper').style.display = 'block';
-          const devTab = document.getElementById('tab-dev');
-          devTab.style.display = 'flex';
-          window.adjustTabs();
-          devTab.click();
+          const page4 = document.getElementById('page-4-wrapper');
+          if (page4) page4.style.display = 'block';
+          const devTab = document.getElementById('tab-dev') as HTMLElement;
+          if (devTab) {
+            devTab.style.display = 'flex';
+            window.adjustTabs();
+            devTab.click();
+          }
         }
       }
     }
@@ -2903,9 +3084,9 @@ if (patient.feeling === 'depressed') {
 window.addEventListener('message', (event) => {
   if (!event.data) return;
 
-  const updateStatusUI = (d) => {
+  const updateStatusUI = (d: any) => {
     if (!d) return;
-    const setT = (id, val) => {
+    const setT = (id: string, val: string) => {
       const el = document.getElementById(id);
       if (el) el.innerText = val || '暂无数据';
     };
@@ -2961,11 +3142,11 @@ window.addEventListener('message', (event) => {
     const cache = window._msgCache;
     if (msgs.length === 0) cache.clear();
 
-    let latestStatus = null;
+    let latestStatus: string | null = null;
     let latestScale = null;
     let isTarot = false;
 
-    const gSettings = JSON.parse(localStorage.getItem('LinUI_GlobalSettings')) || {};
+    const gSettings = JSON.parse(localStorage.getItem('LinUI_GlobalSettings') || 'null') || {};
     const preloadCount = gSettings.vScrollCount || 10;
     const vMargin = preloadCount * 120;
 
@@ -2974,9 +3155,9 @@ window.addEventListener('message', (event) => {
         (entries) => {
           entries.forEach((entry) => {
             if (entry.isIntersecting) {
-              const node = entry.target;
+              const node = entry.target as HTMLElement;
               if (node.dataset.rendered !== 'true') {
-                const rawText = node.dataset.raw;
+                const rawText = node.dataset.raw || '';
                 const isAI = node.dataset.role === 'ai';
                 let html = window._msgCache.get(rawText);
                 if (!html) {
@@ -3004,12 +3185,12 @@ window.addEventListener('message', (event) => {
     const fragment = document.createDocumentFragment();
     const existingNodes = Array.from(chatHistory.children).filter(
       (el) => el.id !== 'typing-bubble' && !el.classList.contains('temp-note'),
-    );
+    ) as HTMLElement[];
 
     window.availableDates = new Set();
     window.availableMonths = new Set();
 
-    msgs.forEach((m, i) => {
+    msgs.forEach((m: any, i: number) => {
       const rawText = m.text.trim();
       const isAI = m.role === 'ai';
       let node = existingNodes[i];
@@ -3036,7 +3217,7 @@ window.addEventListener('message', (event) => {
       }
 
       if (node && node.dataset.raw === rawText && node.dataset.role === m.role) {
-        window._chatObserver.observe(node);
+        window._chatObserver?.observe(node);
         return;
       }
 
@@ -3056,7 +3237,7 @@ window.addEventListener('message', (event) => {
       node.innerHTML = '<div style="opacity:0.3; padding:10px;">...</div>';
       if (!isAI) node.style.transform = `rotate(${(((i * 13.5) % 6) - 3).toFixed(1)}deg)`;
 
-      window._chatObserver.observe(node);
+      window._chatObserver?.observe(node);
 
       if (i >= msgs.length - preloadCount) {
         let html = window._msgCache.get(rawText);
@@ -3088,8 +3269,8 @@ window.addEventListener('message', (event) => {
       );
     }
 
-    if (window.fpInstance) {
-      window.fpInstance.set('enable', Array.from(availableDates));
+    if (window.fpInstance && window.availableDates) {
+      window.fpInstance.set('enable', Array.from(window.availableDates));
     }
 
     if (fragment.children.length > 0) {
@@ -3140,8 +3321,8 @@ window.addEventListener('message', (event) => {
     }
 
     if (latestStatus) {
-      const ex = (key) => {
-        const r = latestStatus.match(new RegExp(`${key}【([\\s\\S]*?)】`));
+      const ex = (key: string) => {
+        const r = latestStatus!.match(new RegExp(`${key}【([\\s\\S]*?)】`));
         return r ? r[1].trim() : '';
       };
       updateStatusUI({
@@ -3165,8 +3346,9 @@ window.addEventListener('message', (event) => {
   }
 
   if (event.data.type === 'SYNC_INPUT_FROM_ST') {
-    if (document.activeElement !== chatInput) {
-      chatInput.value = event.data.text;
+    const chatInputEl = document.getElementById('chatInput') as HTMLInputElement;
+    if (chatInputEl && document.activeElement !== chatInputEl) {
+      chatInputEl.value = event.data.text;
     }
   }
 
@@ -3186,21 +3368,20 @@ window.addEventListener('message', (event) => {
   }
 
   if (event.data.type === 'STREAM_UPDATE') {
-    const chatPage = document.getElementById('page-0');
     let typingBubble = document.getElementById('typing-bubble');
 
     if (!typingBubble) {
       typingBubble = document.createElement('div');
       typingBubble.id = 'typing-bubble';
       typingBubble.className = 'ai-msg msg-narration';
-      document.getElementById('chat-history').appendChild(typingBubble);
+      document.getElementById('chat-history')?.appendChild(typingBubble);
     }
 
     let rawText = event.data.text;
 
     const statusMatch = rawText.match(/<状态栏>([\s\S]*?)<\/状态栏>/);
     if (statusMatch) {
-      const ex = (key) => {
+      const ex = (key: string) => {
         const r = statusMatch[1].match(new RegExp(`${key}【([\\s\\S]*?)】`));
         return r ? r[1].trim() : '';
       };
