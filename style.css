@@ -10,7 +10,6 @@
 
   --turn-speed: 1s;
   --bg-color: #d1cbc3;
-  --bg-noise: url('/textures/crisp-paper-ruffles.png');
 
   --cover-noise: url('/textures/cream-paper.png');
   --page-noise: url('/textures/cardboard-flat.png');
@@ -40,7 +39,6 @@
 
 body.dark-mode {
   --bg-color: #1c1a18;
-  --bg-noise: url('/textures/retina-wood.png');
   --notebook-bg: #6b645c;
   --line-color: rgba(40, 35, 30, 0.4);
   --text-main: #d4cfc7;
@@ -96,7 +94,6 @@ body {
   display: grid;
   place-content: center;
   transform: translateZ(0);
-  background-image: var(--bg-noise);
   background-repeat: repeat;
   background-color: var(--bg-color);
   height: 100dvh;
@@ -556,6 +553,7 @@ body.dark-mode .page[data-index='3'] .page-back {
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  outline: 1px solid #1a2f26;
   box-shadow:
     inset 15px 0 30px rgba(0, 0, 0, 0.4),
     inset 1px 1px 1px rgba(255, 255, 255, 0.15),

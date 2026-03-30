@@ -1,6 +1,6 @@
 <template>
   <div class="chat-room-container">
-    <div class="chat-history" v-bind="containerProps">
+    <div id="chat-history-container" class="chat-history" v-bind="containerProps">
       <div v-bind="wrapperProps" class="chat-history-inner">
         <div v-if="listData.length === 0" class="message-item ai-msg msg-narration">
           <p>这里很安静。</p>
@@ -129,7 +129,6 @@ const handleSend = () => {
   });
 };
 
-const scrollContainerRef = ref<HTMLElement | null>(null);
 const listData = computed(() => chatStore.messages);
 
 const { list, containerProps, wrapperProps, scrollTo } = useVirtualList(listData, {
@@ -138,8 +137,9 @@ const { list, containerProps, wrapperProps, scrollTo } = useVirtualList(listData
 
 const triggerScrollPadding = () => {
   const wrapper = document.getElementById('chat-input-wrapper');
-  if (wrapper && scrollContainerRef.value) {
-    scrollContainerRef.value.style.paddingBottom = `${wrapper.offsetHeight + 15}px`;
+  const container = document.getElementById('chat-history-container');
+  if (wrapper && container) {
+    container.style.paddingBottom = `${wrapper.offsetHeight + 15}px`;
   }
 };
 
@@ -166,8 +166,9 @@ watch([() => chatStore.messages.length, () => chatStore.streamText], async () =>
     if (chatStore.messages.length > 0) {
       scrollTo(chatStore.messages.length - 1);
     }
-    if (scrollContainerRef.value) {
-      scrollContainerRef.value.scrollTop = scrollContainerRef.value.scrollHeight;
+    const container = document.getElementById('chat-history-container');
+    if (container) {
+      container.scrollTop = container.scrollHeight;
     }
   }
 });
@@ -274,10 +275,10 @@ onMounted(() => {
 
 .chat-history {
   position: absolute;
-  top: 0;
-  right: 0px;
+  top: 25px;
+  right: 20px;
   bottom: 0px;
-  left: 0px;
+  left: 20px;
   z-index: 10;
   overflow-y: auto;
   scroll-behavior: smooth;

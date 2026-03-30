@@ -51,9 +51,7 @@ pnpm dev
 
 - **纹理材质:** 来源于 [transparenttextures.com](https://www.transparenttextures.com/)
   - _Cream Paper_ - 由 Devin Holmes 制作。
-  - _Crisp Paper Ruffles_ - 由 Tish 制作。
-  - _Large Leather_ - 由 Elemis 制作。
-  - _Retina Wood_ - 由 Atle Mo 制作。
+  - _Cardboard Flat_ - 由 Appleshadow 制作。
 - **音乐资源:** 来源于 [Pixabay](https://pixabay.com/)（基于 CC0 协议发布）。
 - **植物分形算法:** 灵感来源于《The Algorithmic Beauty of Plants》（作者 Springer-Verlag）。
 - **动画与视觉特效:**
