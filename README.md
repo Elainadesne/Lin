@@ -67,6 +67,8 @@ pnpm dev
   - [![VueUse](https://img.shields.io/badge/VueUse-4FC08D?logo=vueuse&logoColor=white)](https://vueuse.org/) - Vue API 工具集。（采用 [MIT](public/licenses/MIT-vueuse.txt) 协议）
   - [![Three.js](https://img.shields.io/badge/Three.js-000000?logo=threedotjs&logoColor=white)](https://threejs.org/) & [TresJS](https://tresjs.org/) - 3D 引擎。（采用 [MIT](public/licenses/MIT-threejs.txt) 、[MIT](public/licenses/MIT-tresjs.txt) 协议）
   - [![Prettier](https://img.shields.io/badge/Prettier-F7B93E?logo=prettier&logoColor=black)](https://prettier.io/) - 代码规范与格式化工具。（采用 [MIT](public/licenses/MIT-prettier.txt) 协议）
+  - [![PostCss](https://img.shields.io/badge/PostCss-DD3A0A?logo=postcss&logoColor=black)](https://postcss.org/) - 利用 JS 插件转换 CSS 的工具。（采用 [MIT](public/licenses/MIT-postcss.txt) 协议）
+  - [Autoprefixer](https://github.com/postcss/autoprefixer) - 自动解析 CSS 并添加浏览器厂商前缀的 PostCSS 插件。（采用[MIT](public/licenses/MIT-autoprefixer.txt) 协议）
   - [Howler.js](https://howlerjs.com/) - Web 音频播放库。（采用 [MIT](public/licenses/MIT-howler.txt) 协议）
   - [marked](https://marked.js.org/) - Markdown 解析与编译器。（采用 [MIT](public/licenses/MIT-marked.txt) 协议）
   - [DOMPurify](https://github.com/cure53/DOMPurify) - XSS 消毒库。（采用 [Apache-2.0 / MPL-2.0](public/licenses/Apache-2.0-DOMPurify.txt) 协议）

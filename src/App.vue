@@ -8,6 +8,7 @@
     class="app-container"
     :class="{
       'fullscreen-mode': isFullscreen,
+      'app-ready': isAppReady,
     }"
   >
     <div class="notebook">
@@ -91,7 +92,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, provide, ref } from 'vue';
+import { onMounted, onUnmounted, provide, ref } from 'vue';
 import { useMessageSync } from './composables/useMessageSync';
 import { useAppStore } from './stores/useAppStore';
 
@@ -111,6 +112,7 @@ useMessageSync();
 
 const isCoverFlipped = ref(false);
 const isFullscreen = ref(false);
+const isAppReady = ref(false);
 
 provide('toggleFullscreen', () => {
   isFullscreen.value = !isFullscreen.value;
@@ -132,9 +134,27 @@ onMounted(() => {
         }
       }
     });
-  } else if (appStore.settings.autoOpen && appStore.activeTab === -1) {
-    isCoverFlipped.value = true;
   }
+
+  const initApp = () => {
+    if (isAppReady.value) return;
+    requestAnimationFrame(() => {
+      isAppReady.value = true;
+    });
+  };
+
+  if (document.readyState === 'complete') {
+    initApp();
+  } else {
+    window.addEventListener('load', initApp);
+  }
+
+  const fallbackTimer = setTimeout(initApp, 10000);
+
+  onUnmounted(() => {
+    window.removeEventListener('load', initApp);
+    clearTimeout(fallbackTimer);
+  });
 });
 </script>
 

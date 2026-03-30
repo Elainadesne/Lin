@@ -20,6 +20,11 @@
     "format": "prettier . --write",
     "preview": "vite preview"
   },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ],
   "dependencies": {
     "@tresjs/core": "^5.7.0",
     "@vueuse/core": "^14.2.1",
@@ -38,6 +43,8 @@
     "@types/node": "^25.5.0",
     "@types/three": "^0.183.1",
     "@vitejs/plugin-vue": "^6.0.5",
+    "autoprefixer": "^10.4.27",
+    "postcss": "^8.5.8",
     "prettier": "3.8.1",
     "prettier-plugin-css-order": "^2.2.0",
     "prettier-plugin-organize-imports": "^4.3.0",

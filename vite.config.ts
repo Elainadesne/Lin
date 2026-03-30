@@ -1,5 +1,6 @@
 import { templateCompilerOptions } from '@tresjs/core';
 import vue from '@vitejs/plugin-vue';
+import autoprefixer from 'autoprefixer';
 import { defineConfig, ESBuildOptions } from 'vite';
 import Font from 'vite-plugin-font';
 
@@ -14,6 +15,12 @@ export default defineConfig(({ mode }) => {
       Font.vite(),
     ],
     base: '/Lin/',
+
+    css: {
+      postcss: {
+        plugins: [autoprefixer()],
+      },
+    },
 
     server: {
       host: true,
