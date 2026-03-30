@@ -1,3 +1,5 @@
+import { templateCompilerOptions } from '@tresjs/core';
+import vue from '@vitejs/plugin-vue';
 import { defineConfig, ESBuildOptions } from 'vite';
 import Font from 'vite-plugin-font';
 
@@ -5,7 +7,12 @@ export default defineConfig(({ mode }) => {
   const isProd = mode === 'production';
 
   return {
-    plugins: [Font.vite()],
+    plugins: [
+      vue({
+        ...templateCompilerOptions,
+      }),
+      Font.vite(),
+    ],
     base: '/Lin/',
 
     server: {
@@ -21,12 +28,15 @@ export default defineConfig(({ mode }) => {
         output: {
           manualChunks(id: string) {
             if (id.includes('node_modules')) {
+              if (id.includes('vue')) return 'vendor-vue';
+              if (id.includes('@vueuse')) return 'vendor-vueuse';
+              if (id.includes('pinia')) return 'vendor-pinia';
               if (id.includes('three')) return 'vendor-three';
+              if (id.includes('@tresjs')) return 'vendor-tresjs';
               if (id.includes('howler')) return 'vendor-howler';
               if (id.includes('marked')) return 'vendor-marked';
               if (id.includes('dompurify')) return 'vendor-dompurify';
               if (id.includes('roughjs')) return 'vendor-roughjs';
-              if (id.includes('dayjs')) return 'vendor-dayjs';
               if (id.includes('flatpickr')) return 'vendor-flatpickr';
               return 'vendor';
             }
@@ -41,7 +51,19 @@ export default defineConfig(({ mode }) => {
     esbuild: (isProd ? { drop: ['console', 'debugger'] } : undefined) as ESBuildOptions | undefined,
 
     optimizeDeps: {
-      include: ['three', 'howler', 'marked', 'dompurify', 'roughjs', 'dayjs', 'flatpickr'],
+      include: [
+        'vue',
+        '@vueuse/core',
+        'pinia',
+        'three',
+        '@tresjs/core',
+        'howler',
+        'marked',
+        'dompurify',
+        'roughjs',
+        'flatpickr',
+        'vue-flatpickr-component',
+      ],
     },
   };
 });

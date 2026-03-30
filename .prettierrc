@@ -10,5 +10,10 @@
   "bracketSameLine": false,
   "arrowParens": "always",
   "htmlWhitespaceSensitivity": "css",
-  "endOfLine": "lf"
+  "endOfLine": "lf",
+  "plugins": [
+    "prettier-plugin-packagejson",
+    "prettier-plugin-organize-imports",
+    "prettier-plugin-css-order"
+  ]
 }
