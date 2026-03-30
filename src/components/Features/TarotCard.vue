@@ -181,13 +181,11 @@ const handleAnimationEnd = (e: AnimationEvent) => {
 </script>
 
 <style scoped>
-/* 全局已存在动画定义，这里增加退场控制类 */
 .tarot-card-wrapper.is-closing {
   animation: handBackToTop 1s ease-in-out forwards;
   pointer-events: none;
 }
 
-/* 组件内联的样式覆盖（原在 JS 字符串拼接里） */
 .tarot-inner {
   position: relative;
   transform-style: preserve-3d;

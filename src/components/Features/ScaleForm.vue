@@ -17,31 +17,52 @@
       <h1 class="scale-title">{{ scaleData.title }}</h1>
       <div class="scale-desc"><strong>填写指引：</strong> {{ scaleData.desc }}</div>
 
-      <div class="scale-questions-container">
+      <div ref="formScrollRef" class="scale-questions-container" style="overflow-y: auto">
         <div
-          class="scale-q"
-          v-for="(q, qIndex) in scaleData.questions"
-          :key="qIndex"
-          :class="{ answered: answers[qIndex] !== undefined }"
+          :style="{
+            height: `${rowVirtualizer.getTotalSize()}px`,
+            width: '100%',
+            position: 'relative',
+          }"
         >
-          <div class="scale-q-text">{{ qIndex + 1 }}. {{ q.q }}</div>
-          <div class="scale-options">
-            <label
-              v-for="(opt, oIndex) in scaleData.options"
-              :key="oIndex"
-              class="opt-label"
-              :class="{ 'circled-option': answers[qIndex] === opt.value }"
-              :style="answers[qIndex] === opt.value ? getCircleStyle(qIndex) : {}"
-            >
-              <input
-                type="radio"
-                :name="'sq' + qIndex"
-                :value="opt.value"
-                v-model="answers[qIndex]"
-                @change="generateCircleStyle(qIndex)"
-              />
-              <span>{{ opt.label }}</span>
-            </label>
+          <div
+            v-for="virtualRow in rowVirtualizer.getVirtualItems()"
+            :key="virtualRow.index"
+            :ref="(el) => rowVirtualizer.measureElement(el as HTMLElement | null)"
+            class="scale-q"
+            :class="{ answered: answers[virtualRow.index] !== undefined }"
+            :style="{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              transform: `translateY(${virtualRow.start}px)`,
+            }"
+          >
+            <div class="scale-q-text">
+              {{ virtualRow.index + 1 }}. {{ scaleData.questions[virtualRow.index].q }}
+            </div>
+
+            <div class="scale-options">
+              <label
+                v-for="(opt, oIndex) in scaleData.options"
+                :key="oIndex"
+                class="opt-label"
+                :class="{ 'circled-option': answers[virtualRow.index] === opt.value }"
+                :style="
+                  answers[virtualRow.index] === opt.value ? getCircleStyle(virtualRow.index) : {}
+                "
+              >
+                <input
+                  type="radio"
+                  :name="'sq' + virtualRow.index"
+                  :value="opt.value"
+                  v-model="answers[virtualRow.index]"
+                  @change="generateCircleStyle(virtualRow.index)"
+                />
+                <span>{{ opt.label }}</span>
+              </label>
+            </div>
           </div>
         </div>
       </div>
@@ -59,6 +80,7 @@
 </template>
 
 <script setup lang="ts">
+import { useVirtualizer } from '@tanstack/vue-virtual';
 import { computed, onMounted, ref } from 'vue';
 import { useChatStore } from '../../stores/useChatStore';
 import type { ScaleForm } from '../../types';
@@ -83,7 +105,20 @@ const isSubmitted = ref(false);
 const answers = ref<Record<number, number>>({});
 const circleStyles = ref<Record<number, Record<string, string>>>({});
 
+const formScrollRef = ref<HTMLElement | null>(null);
+
+const rowVirtualizer = useVirtualizer(
+  computed(() => ({
+    count: scaleData.value?.questions.length || 0,
+    getScrollElement: () => formScrollRef.value,
+    estimateSize: () => 110,
+    overscan: 5,
+  })),
+);
+
 import { useMessageSync } from '../../composables/useMessageSync';
+
+const messageSync = useMessageSync();
 
 onMounted(async () => {
   if (props.scaleId === 'dev') {
@@ -183,7 +218,6 @@ const handleSubmit = () => {
   }
   report += `\n\n[系统指令]：这是来访者刚刚填写的问卷完整结果。`;
 
-  const messageSync = useMessageSync();
   if (!messageSync.isDevTest.value) {
     chatStore.addTempPromptToHost(report);
   }

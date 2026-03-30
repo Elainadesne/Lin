@@ -213,7 +213,6 @@ const testStream = () => {
   let lastTime = performance.now();
   let currentDelay = Math.random() * 40 + 10;
 
-  // 使用 requestAnimationFrame 结合时间戳替代 setTimeout
   const typeNext = (timestamp: number) => {
     if (timestamp - lastTime >= currentDelay) {
       const currentText = text.substring(0, index);
@@ -221,7 +220,6 @@ const testStream = () => {
       index++;
       lastTime = timestamp;
 
-      // 下一次的延迟：基础延迟 + 低概率卡顿
       currentDelay = Math.random() * 40 + 10;
       if (Math.random() < 0.05) currentDelay += Math.random() * 150 + 100;
 
@@ -233,7 +231,7 @@ const testStream = () => {
     if (index <= text.length) {
       rafId = requestAnimationFrame(typeNext);
     } else {
-      streamChatHtml.value = renderMarkdown(text, true); // 移除光标
+      streamChatHtml.value = renderMarkdown(text, true);
       rafId = null;
     }
   };
@@ -242,6 +240,4 @@ const testStream = () => {
 };
 </script>
 
-<style scoped>
-/* 全局样式已统一定义，此处置空即可 */
-</style>
+<style scoped></style>

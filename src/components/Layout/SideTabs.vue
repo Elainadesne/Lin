@@ -133,6 +133,4 @@ onMounted(() => {
 defineExpose({ adjustTabs });
 </script>
 
-<style scoped>
-/* 全局样式已统一定义，此处置空即可 */
-</style>
+<style scoped></style>

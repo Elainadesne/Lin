@@ -480,7 +480,7 @@ onUnmounted(() => {
   z-index: 1000;
   width: 100%;
   height: 100%;
-  pointer-events: none; /* 让事件穿透到内部的按钮和3D画布 */
+  pointer-events: none;
 }
 .birthday-present-container.is-closing {
   animation: handBackToTop 1s ease-in-out forwards;

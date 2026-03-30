@@ -151,7 +151,6 @@ body.dark-mode .num-input:focus {
   appearance: textfield;
 }
 
-/* 主题选择器样式 */
 .theme-selector {
   display: flex;
   gap: 10px;

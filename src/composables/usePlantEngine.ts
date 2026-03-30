@@ -181,11 +181,6 @@ export function usePlantEngine() {
   const generatedSvg = ref('');
   const gardenLabel = ref('');
 
-  /**
-   * 生成植物的 SVG 字符串
-   * @param forceMonth 强制指定生成某月的植物（用于开发者测试）
-   * @param forceVariant 强制指定生成某月下的哪个变种（用于开发者测试）
-   */
   const generatePlant = (forceMonth?: number, forceVariant?: number) => {
     const date = new Date();
     const month = forceMonth !== undefined ? forceMonth : date.getMonth();

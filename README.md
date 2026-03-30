@@ -63,6 +63,7 @@ pnpm dev
   - [![Vite](https://img.shields.io/badge/Vite-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/) - 前端构建工具。（采用 [MIT](public/licenses/MIT-vite.txt) 协议）
   - [![Pinia](https://img.shields.io/badge/Pinia-FFD859?logo=pinia&logoColor=white)](https://pinia.vuejs.org/) - 状态管理。（采用 [MIT](public/licenses/MIT-pinia.txt) 协议）
   - [![VueUse](https://img.shields.io/badge/VueUse-4FC08D?logo=vueuse&logoColor=white)](https://vueuse.org/) - Vue API 工具集。（采用 [MIT](public/licenses/MIT-vueuse.txt) 协议）
+  - [![TanStack Virtual](https://img.shields.io/badge/TanStack_Virtual-000000?logo=tanstack&logoColor=white)](https://tanstack.com/virtual) - 虚拟滚动引擎。（采用 [MIT](public/licenses/MIT-tanstack-virtual.txt) 协议）
   - [![Three.js](https://img.shields.io/badge/Three.js-000000?logo=threedotjs&logoColor=white)](https://threejs.org/) & [TresJS](https://tresjs.org/) - 3D 引擎。（采用 [MIT](public/licenses/MIT-threejs.txt) 、[MIT](public/licenses/MIT-tresjs.txt) 协议）
   - [![Prettier](https://img.shields.io/badge/Prettier-F7B93E?logo=prettier&logoColor=black)](https://prettier.io/) - 代码规范与格式化工具。（采用 [MIT](public/licenses/MIT-prettier.txt) 协议）
   - [![PostCss](https://img.shields.io/badge/PostCss-DD3A0A?logo=postcss&logoColor=black)](https://postcss.org/) - 利用 JS 插件转换 CSS 的工具。（采用 [MIT](public/licenses/MIT-postcss.txt) 协议）

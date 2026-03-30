@@ -26,6 +26,7 @@
     "not dead"
   ],
   "dependencies": {
+    "@tanstack/vue-virtual": "^3.13.23",
     "@tresjs/core": "^5.7.0",
     "@vueuse/core": "^14.2.1",
     "dompurify": "^3.3.3",

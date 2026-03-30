@@ -1,35 +1,68 @@
 <template>
   <div class="chat-room-container">
-    <div id="chat-history-container" class="chat-history" v-bind="containerProps">
-      <div v-bind="wrapperProps" class="chat-history-inner">
-        <div v-if="listData.length === 0" class="message-item ai-msg msg-narration">
-          <p>这里很安静。</p>
-        </div>
-        <div
-          v-for="item in list"
-          :key="item.data.id"
-          :data-date="item.data.date"
-          :class="[
-            'message-item',
-            item.data.role === 'ai' ? 'ai-msg msg-narration' : 'user-note msg-user',
-          ]"
-          :style="
-            item.data.role === 'user'
-              ? { transform: `rotate(${(((item.index * 13.5) % 6) - 3).toFixed(1)}deg)` }
-              : {}
-          "
-        >
-          <div v-html="renderMarkdown(item.data.rawText, item.data.role === 'ai')"></div>
-        </div>
+    <div id="chat-history-container" class="chat-history" ref="scrollContainerRef">
+      <div v-if="listData.length === 0" class="message-item ai-msg msg-narration">
+        <p>这里很安静。</p>
+      </div>
 
+      <div
+        v-if="listData.length > 0"
+        :style="{
+          height: `${rowVirtualizer.getTotalSize()}px`,
+          width: '100%',
+          position: 'relative',
+        }"
+      >
         <div
-          v-if="chatStore.isGenerating && chatStore.streamText"
-          class="ai-msg msg-narration"
-          id="typing-bubble"
+          v-for="virtualRow in rowVirtualizer.getVirtualItems()"
+          :key="virtualRow.index"
+          :ref="(el) => rowVirtualizer.measureElement(el as HTMLElement | null)"
+          :data-index="virtualRow.index"
+          class="message-item-wrapper"
+          :style="{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            transform: `translateY(${virtualRow.start}px)`,
+          }"
         >
-          <div v-html="renderTypingHtml(chatStore.streamText)"></div>
+          <div
+            :data-date="listData[virtualRow.index].date"
+            :class="[
+              'message-item',
+              listData[virtualRow.index].role === 'ai'
+                ? 'ai-msg msg-narration'
+                : 'user-note msg-user',
+            ]"
+            :style="
+              listData[virtualRow.index].role === 'user'
+                ? { transform: `rotate(${(((virtualRow.index * 13.5) % 6) - 3).toFixed(1)}deg)` }
+                : {}
+            "
+          >
+            <div
+              v-html="
+                renderMarkdown(
+                  listData[virtualRow.index].rawText,
+                  listData[virtualRow.index].role === 'ai',
+                )
+              "
+            ></div>
+          </div>
         </div>
       </div>
+
+      <div
+        v-if="chatStore.isGenerating && chatStore.streamText"
+        class="ai-msg msg-narration"
+        id="typing-bubble"
+        style="margin-top: 15px"
+      >
+        <div v-html="renderTypingHtml(chatStore.streamText)"></div>
+      </div>
+
+      <div :style="{ height: inputBottomSpace + 'px' }" style="flex-shrink: 0; width: 100%"></div>
     </div>
 
     <div class="input-wrapper" id="chat-input-wrapper">
@@ -77,7 +110,8 @@
 </template>
 
 <script setup lang="ts">
-import { useResizeObserver, useVirtualList } from '@vueuse/core';
+import { useVirtualizer } from '@tanstack/vue-virtual';
+import { useResizeObserver } from '@vueuse/core';
 import { Mandarin } from 'flatpickr/dist/l10n/zh.js';
 import { computed, inject, nextTick, onMounted, ref, watch } from 'vue';
 import FlatPickr from 'vue-flatpickr-component';
@@ -129,17 +163,24 @@ const handleSend = () => {
   });
 };
 
+const inputBottomSpace = ref(120);
+const scrollContainerRef = ref<HTMLElement | null>(null);
+
 const listData = computed(() => chatStore.messages);
 
-const { list, containerProps, wrapperProps, scrollTo } = useVirtualList(listData, {
-  itemHeight: 120,
-});
+const rowVirtualizer = useVirtualizer(
+  computed(() => ({
+    count: listData.value.length,
+    getScrollElement: () => scrollContainerRef.value,
+    estimateSize: () => 120,
+    overscan: 1,
+  })),
+);
 
 const triggerScrollPadding = () => {
   const wrapper = document.getElementById('chat-input-wrapper');
-  const container = document.getElementById('chat-history-container');
-  if (wrapper && container) {
-    container.style.paddingBottom = `${wrapper.offsetHeight + 15}px`;
+  if (wrapper) {
+    inputBottomSpace.value = wrapper.offsetHeight + 15;
   }
 };
 
@@ -156,20 +197,20 @@ const scrollToLatest = async () => {
 
   await nextTick();
   if (chatStore.messages.length > 0) {
-    scrollTo(chatStore.messages.length - 1);
+    rowVirtualizer.value.scrollToIndex(chatStore.messages.length - 1, { align: 'end' });
   }
+  const container = scrollContainerRef.value;
+  if (container) container.scrollTop = container.scrollHeight;
 };
 
 watch([() => chatStore.messages.length, () => chatStore.streamText], async () => {
   if (!isViewingHistory.value) {
     await nextTick();
     if (chatStore.messages.length > 0) {
-      scrollTo(chatStore.messages.length - 1);
+      rowVirtualizer.value.scrollToIndex(chatStore.messages.length - 1, { align: 'end' });
     }
-    const container = document.getElementById('chat-history-container');
-    if (container) {
-      container.scrollTop = container.scrollHeight;
-    }
+    const container = scrollContainerRef.value;
+    if (container) container.scrollTop = container.scrollHeight;
   }
 });
 
@@ -248,12 +289,12 @@ const fpConfig = computed(() => {
           }
         });
 
-        scrollTo(closestIndex);
+        rowVirtualizer.value.scrollToIndex(closestIndex, { align: 'start' });
       } else {
         const index = chatStore.messages.findIndex(
           (m) => m.date === targetDateStr || (m.date && m.date.startsWith(targetDateStr)),
         );
-        if (index !== -1) scrollTo(index);
+        if (index !== -1) rowVirtualizer.value.scrollToIndex(index, { align: 'start' });
       }
     },
   };
