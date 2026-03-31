@@ -2,6 +2,7 @@ import { useMediaQuery, useStorage } from '@vueuse/core';
 import { defineStore } from 'pinia';
 import { onMounted, ref, watch } from 'vue';
 import type { GlobalSettings } from '../types';
+import { useEnvStore } from './useEnvStore';
 
 export const useAppStore = defineStore('appStore', () => {
   const systemIsDark = useMediaQuery('(prefers-color-scheme: dark)');
@@ -43,6 +44,7 @@ export const useAppStore = defineStore('appStore', () => {
     autoPlay: true,
     autoOpen: false,
     useSysFont: false,
+    syncEnvData: false,
   });
 
   const activeTab = useStorage<number>('LinUI_ActiveTab', 0);
@@ -80,6 +82,10 @@ export const useAppStore = defineStore('appStore', () => {
   onMounted(() => {
     applyCssVariables();
     evaluateTheme();
+    if (settings.value.syncEnvData) {
+      const envStore = useEnvStore();
+      envStore.syncEnvDataToWorldbook(true);
+    }
   });
 
   const resetSettings = () => {
@@ -90,9 +96,12 @@ export const useAppStore = defineStore('appStore', () => {
       autoPlay: true,
       autoOpen: false,
       useSysFont: false,
+      syncEnvData: false,
     };
     themeMode.value = 'auto';
     evaluateTheme();
+    const envStore = useEnvStore();
+    envStore.syncEnvDataToWorldbook(false);
   };
 
   return {

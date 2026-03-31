@@ -32,6 +32,7 @@ export interface GlobalSettings {
   autoPlay: boolean;
   autoOpen: boolean;
   useSysFont: boolean;
+  syncEnvData: boolean;
 }
 
 export interface PlayerSettings {

@@ -83,6 +83,11 @@ pnpm dev
   - **呆萌手写体** - 设计者 K99Xmas。（采用 [OFL-1.1](public/licenses/OFL-1.1-DymonShouXieTi.txt) 协议）
   - **玄宗体** - 设计者 Yuchen Tian。（采用 [OFL-1.1](public/licenses/OFL-1.1-XuanZongTi.txt) 协议）
   - **云峰寒蝉体** - 设计者 云峰字库。（_[基于作者声明免费使用](https://mp.weixin.qq.com/s/qLRQPJf43h15yPgpcNbLNw)_）
+- **API:**
+  - [BigDataCloud](https://www.bigdatacloud.com/) - 提供地理位置逆解析服务。
+  - [Open-Meteo](https://open-meteo.com/) - 天气预报。
+  - [Nager.Date](https://date.nager.at/) - 全球公共节假日查询。
+  - [china-holiday-calender](https://github.com/lanceliao/china-holiday-calender) - 中国节假日数据源。
 
 ## License
 

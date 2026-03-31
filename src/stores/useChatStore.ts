@@ -158,13 +158,20 @@ export const useChatStore = defineStore('chatStore', () => {
     }
   };
 
-  const addTempPromptToHost = (text: string) => {
+  const addTempPromptToHost = (text: string, options?: { name?: string }) => {
     if (window.parent !== window) {
-      window.parent.postMessage({ type: 'ADD_TEMP_PROMPT', text }, '*');
+      window.parent.postMessage({ type: 'ADD_TEMP_PROMPT', text, name: options?.name }, '*');
+    }
+  };
+
+  const removeTempPromptFromHost = (name: string) => {
+    if (window.parent !== window) {
+      window.parent.postMessage({ type: 'REMOVE_TEMP_PROMPT', name }, '*');
     }
   };
 
   return {
+    removeTempPromptFromHost,
     messages,
     dossier,
     availableDates,

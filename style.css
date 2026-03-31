@@ -171,38 +171,54 @@ body.dark-mode::after {
 
 .pull-cord-container {
   position: fixed;
-  top: 0;
-  right: 35px;
+  top: -20px;
+  right: 25px;
+  transform-origin: top center;
   z-index: 1000;
+  animation: ice-swing 8s ease-in-out infinite;
   cursor: pointer;
-  width: 40px;
-  height: 160px;
+  width: 60px;
+  height: 220px;
 }
+
+@keyframes ice-swing {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(1.5deg);
+  }
+  75% {
+    transform: rotate(-1.5deg);
+  }
+}
+
 .cord {
   position: absolute;
   top: 0;
-  left: 18px;
+  left: 0;
   transition: height 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  box-shadow: 1px 0 3px rgba(0, 0, 0, 0.2);
-  background: repeating-linear-gradient(45deg, #c0392b, #c0392b 4px, #e74c3c 4px, #e74c3c 8px);
-  width: 3px;
-  height: 90px;
+  width: 100%;
+  height: 120px;
 }
-.knob {
-  position: absolute;
-  bottom: -18px;
-  left: -7.5px;
-  box-shadow:
-    2px 3px 8px rgba(0, 0, 0, 0.4),
-    inset -2px -2px 4px rgba(0, 0, 0, 0.2),
-    inset 2px 2px 4px rgba(255, 255, 255, 0.5);
-  border-radius: 12px;
-  background: linear-gradient(135deg, #f1c40f, #d35400);
-  width: 18px;
-  height: 28px;
-}
+
 .pull-cord-container.pulled .cord {
-  height: 125px;
+  height: 160px;
+}
+
+.ice-crystal-svg {
+  position: absolute;
+  bottom: -60px;
+  left: 0;
+  filter: drop-shadow(0px 4px 6px rgba(0, 0, 0, 0.2));
+  width: 60px;
+  height: 200px;
+  pointer-events: none;
+}
+
+body.dark-mode .ice-crystal-svg {
+  filter: drop-shadow(0px 4px 10px rgba(180, 230, 255, 0.3));
 }
 
 .app-container {

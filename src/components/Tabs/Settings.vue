@@ -70,6 +70,17 @@
       </label>
     </div>
     <div class="setting-row" style="margin-top: 15px">
+      <label>同步天气与节假日 (开启需定位)</label>
+      <label class="switch">
+        <input
+          type="checkbox"
+          v-model="appStore.settings.syncEnvData"
+          @change="handleEnvSyncChange"
+        />
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="setting-row" style="margin-top: 15px">
       <label>启动时自动翻开</label>
       <label class="switch">
         <input type="checkbox" v-model="appStore.settings.autoOpen" />
@@ -90,8 +101,18 @@
 
 <script setup lang="ts">
 import { useAppStore } from '../../stores/useAppStore';
+import { useEnvStore } from '../../stores/useEnvStore';
 
 const appStore = useAppStore();
+const envStore = useEnvStore();
+
+const handleEnvSyncChange = async () => {
+  try {
+    await envStore.syncEnvDataToWorldbook(appStore.settings.syncEnvData);
+  } catch (err) {
+    appStore.settings.syncEnvData = false;
+  }
+};
 
 const handleReset = () => {
   if (confirm('确定要恢复所有系统设置为默认值吗？')) {

@@ -117,6 +117,7 @@ import { computed, inject, nextTick, onMounted, ref, watch } from 'vue';
 import FlatPickr from 'vue-flatpickr-component';
 import { useMarkdown } from '../../composables/useMarkdown';
 import { useChatStore } from '../../stores/useChatStore';
+import { useEnvStore } from '../../stores/useEnvStore';
 
 const chatStore = useChatStore();
 const { renderMarkdown, renderTypingHtml } = useMarkdown();
@@ -224,6 +225,8 @@ const openCalendar = () => {
   }
 };
 
+const envStore = useEnvStore();
+
 const fpConfig = computed(() => {
   const enabledDates = chatStore.availableDates;
   return {
@@ -250,6 +253,18 @@ const fpConfig = computed(() => {
 
       if (enabledDates.includes(dateStr)) {
         dayElem.innerHTML += `<span class="event-marker"></span>`;
+      }
+
+      const weather = envStore.weatherMap[dateStr];
+      const holidayName = envStore.holidayMap[dateStr];
+
+      dayElem.style.position = 'relative';
+
+      if (holidayName) {
+        dayElem.innerHTML += `<span title="${holidayName}" style="position:absolute; top:-2px; right:2px; font-size:10px; cursor:help; z-index:10; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.3));">🎊</span>`;
+      }
+      if (weather) {
+        dayElem.innerHTML += `<span title="${weather.text} ${weather.min}°C~${weather.max}°C" style="position:absolute; bottom:0px; left:2px; font-size:12px; cursor:help; z-index:10; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.3));">${weather.emoji}</span>`;
       }
     },
 
