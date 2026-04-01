@@ -11,9 +11,5 @@
   "arrowParens": "always",
   "htmlWhitespaceSensitivity": "css",
   "endOfLine": "lf",
-  "plugins": [
-    "prettier-plugin-packagejson",
-    "prettier-plugin-organize-imports",
-    "prettier-plugin-css-order"
-  ]
+  "plugins": ["prettier-plugin-packagejson", "prettier-plugin-css-order"]
 }

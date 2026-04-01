@@ -1,5 +1,5 @@
 <template>
-  <div class="tabs-container" ref="containerRef">
+  <div ref="containerRef" class="tabs-container">
     <div
       v-for="tab in visibleTabs"
       :key="tab.index"
@@ -10,8 +10,8 @@
         'is-bottom-tab': tabStyles[tab.index]?.position === 'bottom',
       }"
       :style="getStyle(tab.index)"
-      @click="handleTabClick(tab.index)"
       :data-index="tab.index"
+      @click="handleTabClick(tab.index)"
     >
       {{ tab.label }}
     </div>
@@ -21,6 +21,7 @@
 <script setup lang="ts">
 import { useResizeObserver } from '@vueuse/core';
 import { computed, nextTick, onMounted, ref } from 'vue';
+
 import { useAppStore } from '../../stores/useAppStore';
 
 const appStore = useAppStore();
@@ -38,15 +39,16 @@ const visibleTabs = computed(() => {
   return allTabs.filter((tab) => tab.index !== 4 || appStore.isDevModeUnlocked);
 });
 
-const tabStyles = ref<Record<number, { position: 'right' | 'top' | 'bottom'; left: string }>>({});
+type TabPosition = 'right' | 'top' | 'bottom';
+const tabStyles = ref<Record<number, { position: TabPosition; left: string }>>({});
 
-const handleTabClick = (index: number) => {
+const handleTabClick = (index: number): void => {
   appStore.activeTab = index;
 };
 
-const adjustTabs = async () => {
+const adjustTabs = async (): Promise<void> => {
   await nextTick();
-  const notebook = document.querySelector('.notebook') as HTMLElement;
+  const notebook = document.querySelector('.notebook');
   const tabElements = containerRef.value?.querySelectorAll<HTMLElement>('.tab');
 
   if (!notebook || !tabElements) return;
@@ -59,13 +61,13 @@ const adjustTabs = async () => {
   let bottomOffset = 60;
   let placement: 'right' | 'top' | 'bottom' = 'right';
 
-  const newStyles: Record<number, { position: 'right' | 'top' | 'bottom'; left: string }> = {};
+  const newStyles: Record<number, { position: TabPosition; left: string }> = {};
 
   tabElements.forEach((tabEl) => {
     tabEl.classList.remove('is-top-tab', 'is-bottom-tab');
     tabEl.style.left = '';
 
-    const index = parseInt(tabEl.getAttribute('data-index') || '0');
+    const index = parseInt(tabEl.getAttribute('data-index') ?? '0');
     let currentLeft = '';
 
     if (placement === 'right') {
@@ -103,7 +105,7 @@ const adjustTabs = async () => {
   tabStyles.value = newStyles;
 };
 
-const getStyle = (index: number) => {
+const getStyle = (index: number): Record<string, string> => {
   const styleObj = tabStyles.value[index];
   if (!styleObj) return {};
   return {
@@ -114,18 +116,24 @@ const getStyle = (index: number) => {
 };
 
 onMounted(() => {
-  adjustTabs();
+  void adjustTabs();
 
-  if (document.fonts && document.fonts.ready) {
-    document.fonts.ready.then(() => {
-      adjustTabs();
-    });
+  if (document.fonts) {
+    void document.fonts.ready
+      .then(() => {
+        void adjustTabs();
+      })
+      .catch((e: unknown) => {
+        console.warn('Font loading failed:', e);
+      });
   }
 
-  const notebook = document.querySelector('.notebook') as HTMLElement;
+  const notebook = document.querySelector<HTMLElement>('.notebook');
   if (notebook) {
     useResizeObserver(notebook, () => {
-      requestAnimationFrame(adjustTabs);
+      requestAnimationFrame(() => {
+        void adjustTabs();
+      });
     });
   }
 });

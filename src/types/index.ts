@@ -82,7 +82,7 @@ export interface PlantVariant {
   w: number;
   tCol?: string;
   lCol?: string;
-  m?: Record<string, any>;
+  m?: Record<string, unknown>;
 }
 
 export interface PlantConfig {
@@ -97,7 +97,7 @@ export interface PlantConfig {
   vars: PlantVariant[];
   fCol?: string[];
   name?: string;
-  m?: Record<string, any>;
+  m?: Record<string, unknown>;
 }
 
 export type AppMessageType =
@@ -113,6 +113,6 @@ export type AppMessageType =
 export interface AppMessageEvent extends MessageEvent {
   data: {
     type: AppMessageType;
-    [key: string]: any;
+    [key: string]: unknown;
   };
 }

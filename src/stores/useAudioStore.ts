@@ -2,7 +2,9 @@ import { useStorage } from '@vueuse/core';
 import { Howl, Howler } from 'howler';
 import { defineStore } from 'pinia';
 import { computed, ref, watch } from 'vue';
+
 import type { AudioTrack, PlayerSettings } from '../types';
+
 import { useAppStore } from './useAppStore';
 
 declare module 'howler' {
@@ -14,26 +16,27 @@ declare module 'howler' {
 }
 
 if (typeof Howler !== 'undefined') {
-  Howler._obtainHtml5Audio = function () {
+  Howler._obtainHtml5Audio = function (): HTMLAudioElement {
     const self = this || Howler;
-    if (self._html5AudioPool && self._html5AudioPool.length) {
-      return self._html5AudioPool.pop() as HTMLAudioElement;
+    if (self._html5AudioPool?.length) {
+      const audio = self._html5AudioPool.pop();
+      if (audio) return audio;
     }
     return new Audio();
   };
 
   const originalUnlock = Howler._unlockAudio;
-  Howler._unlockAudio = function () {
-    const origAdd = document.addEventListener;
+  Howler._unlockAudio = function (this: unknown, ...args: unknown[]): void {
+    const origAdd = document.addEventListener.bind(document);
     document.addEventListener = function (
       type: string,
       listener: EventListenerOrEventListenerObject,
       options?: boolean | AddEventListenerOptions,
-    ) {
+    ): void {
       if (type === 'touchstart') return;
-      origAdd.call(document, type, listener, options);
+      origAdd(type, listener, options);
     };
-    originalUnlock.apply(this, arguments as any);
+    originalUnlock.apply(this, args as []);
     document.addEventListener = origAdd;
   };
 }
@@ -90,7 +93,7 @@ const filesMap: Record<string, string[]> = {
   ],
 };
 
-const parseFileName = (filename: string) => {
+const parseFileName = (filename: string): { artist: string; title: string } => {
   const rawName = filename.replace('.mp3', '');
   const parts = rawName.split('-');
   if (parts.length < 3) return { artist: '未知艺术家', title: rawName };
@@ -129,7 +132,7 @@ export const useAudioStore = defineStore('audioStore', () => {
 
   const currentTrack = computed(() => playlist.value[currentTrackIndex.value] || null);
 
-  const initTimePeriod = () => {
+  const initTimePeriod = (): void => {
     const hour = new Date().getHours();
     if (hour >= 12 && hour < 18) timePeriod.value = 'afternoon';
     else if (hour >= 18 || hour < 5) timePeriod.value = 'evening';
@@ -138,7 +141,7 @@ export const useAudioStore = defineStore('audioStore', () => {
     loadPlaylistForPeriod(timePeriod.value);
   };
 
-  const loadPlaylistForPeriod = (period: string) => {
+  const loadPlaylistForPeriod = (period: string): void => {
     const files = filesMap[period] || [];
     const baseUrl = import.meta.env.BASE_URL || '/';
 
@@ -152,7 +155,7 @@ export const useAudioStore = defineStore('audioStore', () => {
     });
   };
 
-  const triggerBirthdayMode = () => {
+  const triggerBirthdayMode = (): void => {
     if (isBirthdayMode.value) return;
     isBirthdayMode.value = true;
     timePeriod.value = 'birthday';
@@ -183,15 +186,15 @@ export const useAudioStore = defineStore('audioStore', () => {
     to: number,
     duration: number,
     onComplete?: () => void,
-  ) => {
+  ): void => {
     if (!howlObj) return;
-    const anyHowl = howlObj as any;
+    const anyHowl = howlObj as Howl & { _customFadeId?: number | null };
     if (anyHowl._customFadeId) cancelAnimationFrame(anyHowl._customFadeId);
 
     const startTime = performance.now();
-    const update = (now: number) => {
-      let t = Math.min((now - startTime) / duration, 1);
-      let vol = from < to ? from + (to - from) * (t * t) : to + (from - to) * ((1 - t) * (1 - t));
+    const update = (now: number): void => {
+      const t = Math.min((now - startTime) / duration, 1);
+      const vol = from < to ? from + (to - from) * (t * t) : to + (from - to) * ((1 - t) * (1 - t));
 
       howlObj.volume(Math.max(0, Math.min(1, vol)));
 
@@ -205,7 +208,7 @@ export const useAudioStore = defineStore('audioStore', () => {
     anyHowl._customFadeId = requestAnimationFrame(update);
   };
 
-  const stepProgress = () => {
+  const stepProgress = (): void => {
     if (!currentHowl || !isPlaying.value) return;
     if (currentHowl.state() !== 'loaded') return;
 
@@ -216,19 +219,19 @@ export const useAudioStore = defineStore('audioStore', () => {
     totalTime.value = typeof dur === 'number' && !isNaN(dur) && dur > 0 ? dur : 0;
   };
 
-  const startProgressTimer = () => {
+  const startProgressTimer = (): void => {
     if (updateIntervalId) clearInterval(updateIntervalId);
     updateIntervalId = window.setInterval(stepProgress, 500);
   };
 
-  const stopProgressTimer = () => {
+  const stopProgressTimer = (): void => {
     if (updateIntervalId) {
       clearInterval(updateIntervalId);
       updateIntervalId = null;
     }
   };
 
-  const loadTrack = (index: number, autoStart = false, isPrev = false) => {
+  const loadTrack = (index: number, autoStart = false, isPrev = false): void => {
     if (typeof Howl === 'undefined' || typeof Howler === 'undefined') {
       console.warn('[Lin 音乐系统] Howler.js 未加载。');
       return;
@@ -277,13 +280,13 @@ export const useAudioStore = defineStore('audioStore', () => {
     });
 
     currentHowl.on('load', () => {
-      totalTime.value = currentHowl!.duration();
+      totalTime.value = currentHowl?.duration() ?? 0;
       if (autoStart) playTrack();
     });
 
     currentHowl.on('play', () => {
       isPlaying.value = true;
-      customFade(currentHowl!, currentHowl!.volume(), 1, 1000);
+      if (currentHowl) customFade(currentHowl, currentHowl.volume(), 1, 1000);
       startProgressTimer();
     });
 
@@ -302,7 +305,7 @@ export const useAudioStore = defineStore('audioStore', () => {
     });
   };
 
-  const playTrack = () => {
+  const playTrack = (): void => {
     if (!currentHowl) return;
     if (!currentHowl.playing()) {
       currentHowl.volume(0);
@@ -314,26 +317,27 @@ export const useAudioStore = defineStore('audioStore', () => {
     }
   };
 
-  const pauseTrack = () => {
+  const pauseTrack = (): void => {
     if (!currentHowl) return;
     isPlaying.value = false;
     customFade(currentHowl, currentHowl.volume(), 0, 800, () => {
-      if (!isPlaying.value) currentHowl!.pause();
+      if (!isPlaying.value) currentHowl?.pause();
     });
   };
 
-  const togglePlay = () => {
-    isPlaying.value ? pauseTrack() : playTrack();
+  const togglePlay = (): void => {
+    if (isPlaying.value) pauseTrack();
+    else playTrack();
   };
 
-  const seekTrack = (targetTime: number) => {
-    if (currentHowl && currentHowl.state() === 'loaded') {
+  const seekTrack = (targetTime: number): void => {
+    if (currentHowl?.state() === 'loaded') {
       currentHowl.seek(targetTime);
       currentTime.value = targetTime;
     }
   };
 
-  const getNextValidIndex = (current: number, direction = 1) => {
+  const getNextValidIndex = (current: number, direction = 1): number => {
     const valid = validIndices.value;
     if (valid.length === 0) return -1;
 
@@ -351,22 +355,24 @@ export const useAudioStore = defineStore('audioStore', () => {
       } else {
         if (direction === 1) {
           const nextValid = valid.find((i) => i > current);
-          return nextValid !== undefined ? nextValid : valid[0];
+          return nextValid ?? valid[0];
         } else {
           const prevValid = [...valid].reverse().find((i) => i < current);
-          return prevValid !== undefined ? prevValid : valid[valid.length - 1];
+          return prevValid ?? valid[valid.length - 1];
         }
       }
     }
   };
 
-  const playNext = (auto = false) => {
-    if (validIndices.value.length === 0) return pauseTrack();
+  const playNext = (auto = false): void => {
+    if (validIndices.value.length === 0) {
+      pauseTrack();
+      return;
+    }
     const isCurrentDisabled = playerSettings.value.disabled.includes(
       playlist.value[currentTrackIndex.value]?.src,
     );
-    let nextIndex = currentTrackIndex.value;
-
+    let nextIndex: number;
     if (auto && playerSettings.value.mode === 2 && !isCurrentDisabled) {
       nextIndex = currentTrackIndex.value;
     } else {
@@ -375,13 +381,16 @@ export const useAudioStore = defineStore('audioStore', () => {
     loadTrack(nextIndex, true);
   };
 
-  const playPrev = () => {
-    if (validIndices.value.length === 0) return pauseTrack();
+  const playPrev = (): void => {
+    if (validIndices.value.length === 0) {
+      pauseTrack();
+      return;
+    }
 
     let prevIndex = -1;
     while (playHistory.value.length > 0) {
-      const idx = playHistory.value.pop()!;
-      if (!playerSettings.value.disabled.includes(playlist.value[idx].src)) {
+      const idx = playHistory.value.pop();
+      if (idx !== undefined && !playerSettings.value.disabled.includes(playlist.value[idx].src)) {
         prevIndex = idx;
         break;
       }

@@ -18,22 +18,22 @@
         />
 
         <TresGroup
-          :scale="groupScale"
-          :rotation="groupRotation"
+          :scale="[groupScale[0], groupScale[1], groupScale[2]]"
+          :rotation="[groupRotation[0], groupRotation[1], groupRotation[2]]"
           @click="handleInteract"
           @touchstart.prevent="handleInteract"
         >
           <TresGroup
             v-for="(side, sIdx) in sides"
             :key="`side_${sIdx}`"
-            :position="side.pos"
-            :rotation="side.rot"
+            :position="[side.pos[0], side.pos[1], side.pos[2]]"
+            :rotation="[side.rot[0], side.rot[1], side.rot[2]]"
           >
             <TresMesh
               v-for="piece in side.pieces"
               :key="piece.id"
-              :position="piece.pos"
-              :rotation="piece.rot"
+              :position="[piece.pos[0], piece.pos[1], piece.pos[2]]"
+              :rotation="[piece.rot[0], piece.rot[1], piece.rot[2]]"
               receive-shadow
             >
               <TresPlaneGeometry :args="[fracS, fracS]" />
@@ -46,7 +46,11 @@
             </TresMesh>
           </TresGroup>
 
-          <TresMesh :position="bow.pos" :rotation="bow.rot" cast-shadow>
+          <TresMesh
+            :position="[bow.pos[0], bow.pos[1], bow.pos[2]]"
+            :rotation="[bow.rot[0], bow.rot[1], bow.rot[2]]"
+            cast-shadow
+          >
             <TresDodecahedronGeometry :args="[2]" />
             <TresMeshStandardMaterial color="#ff4d79" transparent :opacity="presentOpacity" />
           </TresMesh>
@@ -58,7 +62,7 @@
       生日快乐！点击拆开礼物 🎁
     </div>
 
-    <button class="close-btn" v-if="opened && presentOpacity === 1" @click="closeComponent">
+    <button v-if="opened && presentOpacity === 1" class="close-btn" @click="closeComponent">
       收起礼物
     </button>
   </div>
@@ -67,9 +71,10 @@
 <script setup lang="ts">
 import { useLoop } from '@tresjs/core';
 import { onMounted, onUnmounted, ref } from 'vue';
+
 import { useChatStore } from '../../stores/useChatStore';
 
-const emit = defineEmits<{ (e: 'close'): void }>();
+const emit = defineEmits<(e: 'close') => void>();
 const chatStore = useChatStore();
 
 const S = 8,
@@ -82,13 +87,27 @@ const opening = ref(false);
 const opened = ref(false);
 const openTime = ref(0);
 const presentOpacity = ref(1);
-const groupScale = ref<[number, number, number]>([1, 1, 1]);
-const groupRotation = ref<[number, number, number]>([0, Math.PI / 4, 0]);
+const groupScale = ref([1, 1, 1]);
+const groupRotation = ref([0, Math.PI / 4, 0]);
 const isClosing = ref(false);
 
-const rand = (min: number, max: number) => Math.random() * (max - min) + min;
+const rand = (min: number, max: number): number => Math.random() * (max - min) + min;
 
-const sides = ref<any[]>([]);
+interface Piece {
+  id: string;
+  isM: boolean;
+  pos: number[];
+  firstPos: number[];
+  rot: number[];
+  vel: number[];
+  rotSpeed: number[];
+}
+interface Side {
+  pos: number[];
+  rot: number[];
+  pieces: Piece[];
+}
+const sides = ref<Side[]>([]);
 const bow = ref({
   pos: [0, HS + 1, 0] as [number, number, number],
   firstPos: [0, HS + 1, 0] as [number, number, number],
@@ -102,7 +121,7 @@ const bow = ref({
 });
 
 for (let s = 0; s < 6; ++s) {
-  let pos = [0, 0, 0];
+  let pos: number[];
   let rot = [0, 0, 0];
 
   if (s === 0) {
@@ -170,7 +189,7 @@ onBeforeRender(() => {
       presentOpacity.value = Math.max(0, presentOpacity.value - 0.03);
 
       sides.value.forEach((side) => {
-        side.pieces.forEach((p: any) => {
+        side.pieces.forEach((p: Piece) => {
           p.pos[0] += p.vel[0];
           p.pos[1] += p.vel[1];
           p.pos[2] += p.vel[2];
@@ -192,7 +211,7 @@ onBeforeRender(() => {
       groupScale.value = [1, 1, 1];
 
       sides.value.forEach((side) => {
-        side.pieces.forEach((p: any) => {
+        side.pieces.forEach((p: Piece) => {
           p.pos = [...p.firstPos];
           p.rot = [0, 0, 0];
         });
@@ -203,19 +222,19 @@ onBeforeRender(() => {
   }
 });
 
-const handleInteract = () => {
+const handleInteract = (): void => {
   if (!opening.value && !opened.value) {
     opening.value = true;
     stopConfetti();
   }
 };
 
-const closeComponent = () => {
+const closeComponent = (): void => {
   isClosing.value = true;
   stopConfetti();
 };
 
-const handleAnimationEnd = (e: AnimationEvent) => {
+const handleAnimationEnd = (e: AnimationEvent): void => {
   if (e.animationName === 'handBackToTop') {
     emit('close');
   }
@@ -252,11 +271,11 @@ class EulerMass {
   ) {
     this.pos = new Vector2(x, y);
   }
-  AddForce(fx: number, fy: number) {
+  AddForce(fx: number, fy: number): void {
     this.force.x += fx;
     this.force.y += fy;
   }
-  Integrate(dt: number) {
+  Integrate(dt: number): void {
     const speed = Math.hypot(this.vel.x, this.vel.y);
     const accX = (this.force.x - this.drag * this.mass * this.vel.x * speed) / this.mass;
     const accY = (this.force.y - this.drag * this.mass * this.vel.y * speed) / this.mass;
@@ -291,7 +310,7 @@ class Paper {
       y: Math.sin(this.angle + DEG_TO_RAD * (i * 90 + 45)),
     }));
   }
-  update(dt: number) {
+  update(dt: number): void {
     this.time += dt;
     this.rotation += this.rotationSpeed * dt;
     this.pos.x += Math.cos(this.time * this.oscSpeed) * this.xSpeed * dt;
@@ -301,21 +320,22 @@ class Paper {
       this.pos.y = -50;
     }
   }
-  draw(retina: number) {
+  draw(retina: number): void {
     const cosA = Math.cos(DEG_TO_RAD * this.rotation);
     ctx.fillStyle = cosA > 0 ? this.front : this.back;
     ctx.beginPath();
     this.corners.forEach((c, i) => {
       const px = (this.pos.x + c.x * this.size) * retina;
       const py = (this.pos.y + c.y * this.size * cosA) * retina;
-      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
     });
     ctx.closePath();
     ctx.fill();
   }
 }
 
-const entities: any[] = [];
+const entities: (Paper | ConfettiRibbon)[] = [];
 let lastTime = Date.now();
 let w = window.innerWidth;
 let h = window.innerHeight;
@@ -354,7 +374,7 @@ class ConfettiRibbon {
       this.particles.push(new EulerMass(x, y - i * this.particleDist, 1, 0.05));
     }
   }
-  update(dt: number) {
+  update(dt: number): void {
     this.time += dt * this.oscSpeed;
     this.pos.y += this.ySpeed * dt;
     this.pos.x += Math.cos(this.time) * this.oscDist * dt;
@@ -401,7 +421,7 @@ class ConfettiRibbon {
       }
     }
   }
-  draw(retina: number) {
+  draw(retina: number): void {
     for (let i = 0; i < this.particleCount - 1; i++) {
       const p0x = this.particles[i].pos.x + this.xOff,
         p0y = this.particles[i].pos.y + this.yOff;
@@ -424,7 +444,7 @@ class ConfettiRibbon {
   }
 }
 
-const stopConfetti = () => {
+const stopConfetti = (): void => {
   if (confettiRef.value) confettiRef.value.style.opacity = '0';
   isConfettiStopping = true;
   cancelAnimationFrame(rafId);
@@ -432,7 +452,9 @@ const stopConfetti = () => {
 
 onMounted(() => {
   if (!confettiRef.value) return;
-  ctx = confettiRef.value.getContext('2d') as CanvasRenderingContext2D;
+  const context = confettiRef.value.getContext('2d');
+  if (!context) return;
+  ctx = context;
   confettiRef.value.width = w * retina;
   confettiRef.value.height = h * retina;
   confettiRef.value.style.opacity = '1';
@@ -443,7 +465,7 @@ onMounted(() => {
   for (let i = 0; i < ribbonCount; i++)
     entities.push(new ConfettiRibbon(Math.random() * w, -Math.random() * h * 2));
 
-  const animate = () => {
+  const animate = (): void => {
     const now = Date.now();
     let dt = (now - lastTime) / 1000;
     lastTime = now;

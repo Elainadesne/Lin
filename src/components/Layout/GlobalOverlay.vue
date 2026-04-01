@@ -1,7 +1,7 @@
 <template>
   <Teleport to="#global-overlay">
     <Transition name="overlay-fade">
-      <div class="global-overlay-container" v-if="hasActiveOverlay">
+      <div v-if="hasActiveOverlay" class="global-overlay-container">
         <BirthdayPresent
           v-if="messageSync.triggerBirthday.value"
           @close="handleClose('birthday')"
@@ -21,6 +21,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+
 import { useMessageSync } from '../../composables/useMessageSync';
 import BirthdayPresent from '../Features/BirthdayPresent.vue';
 import ScaleForm from '../Features/ScaleForm.vue';
@@ -36,7 +37,7 @@ const hasActiveOverlay = computed(() => {
   );
 });
 
-const handleClose = (type: 'birthday' | 'tarot' | 'scale') => {
+const handleClose = (type: 'birthday' | 'tarot' | 'scale'): void => {
   messageSync.resetTrigger(type);
 };
 </script>

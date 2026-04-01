@@ -5,6 +5,7 @@
     "module": "ESNext",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "skipLibCheck": true,
+    "allowJs": true,
 
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
@@ -21,5 +22,5 @@
     "types": ["vite/client", "node", "vite-plugin-font/src/font"]
   },
   "include": ["**/*.ts", "**/*.d.ts", "**/*.tsx", "**/*.vue"],
-  "exclude": ["node_modules", "dist"]
+  "exclude": ["node_modules", "dist", "public"]
 }

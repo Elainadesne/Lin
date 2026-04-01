@@ -54,10 +54,10 @@
                 "
               >
                 <input
+                  v-model="answers[virtualRow.index]"
                   type="radio"
                   :name="'sq' + virtualRow.index"
                   :value="opt.value"
-                  v-model="answers[virtualRow.index]"
                   @change="generateCircleStyle(virtualRow.index)"
                 />
                 <span>{{ opt.label }}</span>
@@ -82,6 +82,8 @@
 <script setup lang="ts">
 import { useVirtualizer } from '@tanstack/vue-virtual';
 import { computed, onMounted, ref } from 'vue';
+
+import { useMessageSync } from '../../composables/useMessageSync';
 import { useChatStore } from '../../stores/useChatStore';
 import type { ScaleForm } from '../../types';
 
@@ -89,9 +91,7 @@ const props = defineProps<{
   scaleId: string;
 }>();
 
-const emit = defineEmits<{
-  (e: 'close'): void;
-}>();
+const emit = defineEmits<(e: 'close') => void>();
 
 const chatStore = useChatStore();
 
@@ -109,14 +109,12 @@ const formScrollRef = ref<HTMLElement | null>(null);
 
 const rowVirtualizer = useVirtualizer(
   computed(() => ({
-    count: scaleData.value?.questions.length || 0,
-    getScrollElement: () => formScrollRef.value,
-    estimateSize: () => 110,
+    count: scaleData.value?.questions.length ?? 0,
+    getScrollElement: (): HTMLElement | null => formScrollRef.value,
+    estimateSize: (): number => 110,
     overscan: 5,
   })),
 );
-
-import { useMessageSync } from '../../composables/useMessageSync';
 
 const messageSync = useMessageSync();
 
@@ -147,7 +145,7 @@ onMounted(async () => {
     const res = await fetch(`${baseUrl}scales/${props.scaleId}.json`);
     if (!res.ok) throw new Error('找不到表单文件');
     scaleData.value = (await res.json()) as ScaleForm;
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error(e);
     fetchError.value = `[系统提示] 无法加载表单 ${props.scaleId}.json`;
   } finally {
@@ -155,16 +153,16 @@ onMounted(async () => {
   }
 });
 
-const totalQuestions = computed(() => scaleData.value?.questions.length || 0);
+const totalQuestions = computed(() => scaleData.value?.questions.length ?? 0);
 const answeredCount = computed(() => Object.keys(answers.value).length);
 const unansweredCount = computed(() => totalQuestions.value - answeredCount.value);
 const isAllAnswered = computed(() => totalQuestions.value > 0 && unansweredCount.value === 0);
 
-const generateCircleStyle = (qIndex: number) => {
+const generateCircleStyle = (qIndex: number): void => {
   const rot = (Math.random() * 16 - 8).toFixed(1);
   const w = (Math.random() * 15 + 105).toFixed(1);
   const h = (Math.random() * 20 + 120).toFixed(1);
-  const r = () => Math.floor(Math.random() * 20 + 40);
+  const r = (): number => Math.floor(Math.random() * 20 + 40);
   const br = `${r()}% ${r()}% ${r()}% ${r()}% / ${r()}% ${r()}% ${r()}% ${r()}%`;
 
   circleStyles.value[qIndex] = {
@@ -175,11 +173,11 @@ const generateCircleStyle = (qIndex: number) => {
   };
 };
 
-const getCircleStyle = (qIndex: number) => {
-  return circleStyles.value[qIndex] || {};
+const getCircleStyle = (qIndex: number): Record<string, string> => {
+  return circleStyles.value[qIndex] ?? {};
 };
 
-const handleSubmit = () => {
+const handleSubmit = (): void => {
   if (!scaleData.value || !isAllAnswered.value) return;
 
   let totalScore = 0;
@@ -194,10 +192,10 @@ const handleSubmit = () => {
 
   scaleData.value.questions.forEach((q, idx) => {
     const val = answers.value[idx];
-    const optLabel = scaleData.value!.options.find((o) => o.value === val)?.label || '未知';
+    const optLabel = scaleData.value?.options.find((o) => o.value === val)?.label ?? '未知';
 
     totalScore += val;
-    if (q.f && factorScores[q.f] !== undefined) {
+    if (q.f && factorScores[q.f] != null) {
       factorScores[q.f] += val;
     }
     details.push(`${idx + 1}. ${q.q}\n答：${optLabel} (${val}分)`);
@@ -225,7 +223,7 @@ const handleSubmit = () => {
   handleClose();
 };
 
-const handleClose = () => {
+const handleClose = (): void => {
   if (isClosing.value) return;
 
   if (!isSubmitted.value && scaleData.value) {
@@ -236,8 +234,8 @@ const handleClose = () => {
     } else {
       scaleData.value.questions.forEach((q, idx) => {
         const val = answers.value[idx];
-        if (val !== undefined) {
-          const labelText = scaleData.value!.options.find((o) => o.value === val)?.label || '已选';
+        if (val != null) {
+          const labelText = scaleData.value?.options.find((o) => o.value === val)?.label ?? '已选';
           details.push(`${idx + 1}. ${q.q} —— (已作答：${labelText})`);
         } else {
           details.push(`${idx + 1}. ${q.q} —— (未作答/跳过)`);
@@ -251,7 +249,7 @@ const handleClose = () => {
   isClosing.value = true;
 };
 
-const handleAnimationEnd = (e: AnimationEvent) => {
+const handleAnimationEnd = (e: AnimationEvent): void => {
   if (e.animationName === 'handBackToTop') {
     emit('close');
   }

@@ -1,7 +1,9 @@
 import { useMediaQuery, useStorage } from '@vueuse/core';
 import { defineStore } from 'pinia';
 import { onMounted, ref, watch } from 'vue';
+
 import type { GlobalSettings } from '../types';
+
 import { useEnvStore } from './useEnvStore';
 
 export const useAppStore = defineStore('appStore', () => {
@@ -11,7 +13,7 @@ export const useAppStore = defineStore('appStore', () => {
 
   const isDark = ref(false);
 
-  const applyTheme = () => {
+  const applyTheme = (): void => {
     if (isDark.value) {
       document.body.classList.add('dark-mode');
     } else {
@@ -19,7 +21,7 @@ export const useAppStore = defineStore('appStore', () => {
     }
   };
 
-  const evaluateTheme = () => {
+  const evaluateTheme = (): void => {
     if (themeMode.value === 'auto') {
       isDark.value = systemIsDark.value;
     } else {
@@ -32,7 +34,7 @@ export const useAppStore = defineStore('appStore', () => {
     evaluateTheme();
   });
 
-  const toggleDark = () => {
+  const toggleDark = (): void => {
     isDark.value = !isDark.value;
     applyTheme();
   };
@@ -47,15 +49,15 @@ export const useAppStore = defineStore('appStore', () => {
     syncEnvData: false,
   });
 
-  const activeTab = useStorage<number>('LinUI_ActiveTab', 0);
+  const activeTab = useStorage('LinUI_ActiveTab', 0);
 
   if (!settings.value.autoOpen) {
     activeTab.value = -1;
   }
 
-  const isDevModeUnlocked = useStorage<boolean>('LinUI_DevUnlocked', false);
+  const isDevModeUnlocked = useStorage('LinUI_DevUnlocked', false);
 
-  const applyCssVariables = () => {
+  const applyCssVariables = (): void => {
     const root = document.documentElement.style;
     root.setProperty(
       '--base-font-size',
@@ -84,11 +86,11 @@ export const useAppStore = defineStore('appStore', () => {
     evaluateTheme();
     if (settings.value.syncEnvData) {
       const envStore = useEnvStore();
-      envStore.syncEnvDataToWorldbook(true);
+      void envStore.syncEnvDataToWorldbook(true);
     }
   });
 
-  const resetSettings = () => {
+  const resetSettings = (): void => {
     settings.value = {
       vol: 30,
       fontSize: 15,
@@ -101,7 +103,7 @@ export const useAppStore = defineStore('appStore', () => {
     themeMode.value = 'auto';
     evaluateTheme();
     const envStore = useEnvStore();
-    envStore.syncEnvDataToWorldbook(false);
+    void envStore.syncEnvDataToWorldbook(false);
   };
 
   return {

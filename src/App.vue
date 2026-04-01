@@ -12,11 +12,11 @@
     }"
   >
     <div class="notebook">
-      <div class="spiral-container" id="spirals">
+      <div id="spirals" class="spiral-container">
         <div v-for="i in 14" :key="i" class="spiral-ring"></div>
       </div>
 
-      <div class="pages-container" id="book-pages">
+      <div id="book-pages" class="pages-container">
         <div
           class="page"
           data-index="-1"
@@ -32,7 +32,7 @@
         </div>
 
         <div class="page" data-index="0" :class="{ flipped: appStore.activeTab > 0 }">
-          <div class="page-front" id="page-0">
+          <div id="page-0" class="page-front">
             <ChatRoom />
           </div>
           <div class="page-back close-book-area" @click="closeBook">
@@ -41,7 +41,7 @@
         </div>
 
         <div class="page" data-index="1" :class="{ flipped: appStore.activeTab > 1 }">
-          <div class="page-front" id="page-1">
+          <div id="page-1" class="page-front">
             <Dossier />
           </div>
           <div class="page-back close-book-area" @click="closeBook">
@@ -54,7 +54,7 @@
         </div>
 
         <div class="page" data-index="2" :class="{ flipped: appStore.activeTab > 2 }">
-          <div class="page-front" id="page-2">
+          <div id="page-2" class="page-front">
             <Garden />
           </div>
           <div class="page-back close-book-area" @click="closeBook">
@@ -63,7 +63,7 @@
         </div>
 
         <div class="page" data-index="3" :class="{ flipped: appStore.activeTab > 3 }">
-          <div class="page-front" id="page-3">
+          <div id="page-3" class="page-front">
             <Settings />
           </div>
           <div class="page-back close-book-area" @click="closeBook">
@@ -72,12 +72,12 @@
         </div>
 
         <div
+          v-if="appStore.isDevModeUnlocked"
           class="page"
           data-index="4"
-          v-if="appStore.isDevModeUnlocked"
           :class="{ flipped: appStore.activeTab > 4 }"
         >
-          <div class="page-front dev-page-front" id="page-4">
+          <div id="page-4" class="page-front dev-page-front">
             <DevPanel />
           </div>
           <div class="page-back close-book-area" @click="closeBook">
@@ -93,18 +93,17 @@
 
 <script setup lang="ts">
 import { onMounted, onUnmounted, provide, ref } from 'vue';
-import { useMessageSync } from './composables/useMessageSync';
-import { useAppStore } from './stores/useAppStore';
 
 import GlobalOverlay from './components/Layout/GlobalOverlay.vue';
 import PullCord from './components/Layout/PullCord.vue';
 import SideTabs from './components/Layout/SideTabs.vue';
-
 import ChatRoom from './components/Tabs/ChatRoom.vue';
 import DevPanel from './components/Tabs/DevPanel.vue';
 import Dossier from './components/Tabs/Dossier.vue';
 import Garden from './components/Tabs/Garden.vue';
 import Settings from './components/Tabs/Settings.vue';
+import { useMessageSync } from './composables/useMessageSync';
+import { useAppStore } from './stores/useAppStore';
 
 const appStore = useAppStore();
 
@@ -118,17 +117,18 @@ provide('toggleFullscreen', () => {
   isFullscreen.value = !isFullscreen.value;
 });
 
-const closeBook = () => {
+const closeBook = (): void => {
   appStore.activeTab = -1;
   isCoverFlipped.value = false;
 };
 
 onMounted(() => {
-  const appContainer = document.querySelector('.app-container') as HTMLElement;
+  const appContainer = document.querySelector('.app-container');
 
   if (appContainer) {
-    appContainer.addEventListener('animationend', (e: AnimationEvent) => {
-      if (e.animationName === 'appHandOver') {
+    appContainer.addEventListener('animationend', (e: Event) => {
+      const animEvent = e as AnimationEvent;
+      if (animEvent.animationName === 'appHandOver') {
         if (appStore.settings.autoOpen && appStore.activeTab === -1) {
           isCoverFlipped.value = true;
         }
@@ -136,7 +136,7 @@ onMounted(() => {
     });
   }
 
-  const initApp = () => {
+  const initApp = (): void => {
     if (isAppReady.value) return;
     requestAnimationFrame(() => {
       isAppReady.value = true;

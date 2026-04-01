@@ -1,6 +1,6 @@
 <template>
   <div class="chat-room-container">
-    <div id="chat-history-container" class="chat-history" ref="scrollContainerRef">
+    <div id="chat-history-container" ref="scrollContainerRef" class="chat-history">
       <div v-if="listData.length === 0" class="message-item ai-msg msg-narration">
         <p>这里很安静。</p>
       </div>
@@ -55,27 +55,27 @@
 
       <div
         v-if="chatStore.isGenerating && chatStore.streamText"
-        class="ai-msg msg-narration"
         id="typing-bubble"
+        class="ai-msg msg-narration"
         style="margin-top: 15px"
       >
         <div v-html="renderTypingHtml(chatStore.streamText)"></div>
       </div>
 
-      <div :style="{ height: inputBottomSpace + 'px' }" style="flex-shrink: 0; width: 100%"></div>
+      <div :style="{ height: `${inputBottomSpace}px` }" style="flex-shrink: 0; width: 100%"></div>
     </div>
 
-    <div class="input-wrapper" id="chat-input-wrapper">
+    <div id="chat-input-wrapper" class="input-wrapper">
       <div style="position: relative; width: 38px; height: 38px">
         <button
           class="glass-btn"
-          @click="openCalendar"
           title="历史检索"
           style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2"
+          @click="openCalendar"
         >
           📅
         </button>
-        <flat-pickr v-model="selectedDate" :config="fpConfig" class="hidden-fp-input" ref="fpRef" />
+        <flat-pickr ref="fpRef" v-model="selectedDate" :config="fpConfig" class="hidden-fp-input" />
       </div>
 
       <button v-if="isViewingHistory" class="glass-btn glass-btn-wide" @click="scrollToLatest">
@@ -104,7 +104,7 @@
         </button>
       </template>
 
-      <button class="fs-btn" @click="toggleFullscreen" title="全屏切换">⛶</button>
+      <button class="fs-btn" title="全屏切换" @click="toggleFullscreen">⛶</button>
     </div>
   </div>
 </template>
@@ -115,6 +115,7 @@ import { useResizeObserver } from '@vueuse/core';
 import { Mandarin } from 'flatpickr/dist/l10n/zh.js';
 import { computed, inject, nextTick, onMounted, ref, watch } from 'vue';
 import FlatPickr from 'vue-flatpickr-component';
+
 import { useMarkdown } from '../../composables/useMarkdown';
 import { useChatStore } from '../../stores/useChatStore';
 import { useEnvStore } from '../../stores/useEnvStore';
@@ -122,7 +123,9 @@ import { useEnvStore } from '../../stores/useEnvStore';
 const chatStore = useChatStore();
 const { renderMarkdown, renderTypingHtml } = useMarkdown();
 
-const toggleFullscreen = inject<() => void>('toggleFullscreen', () => {});
+const toggleFullscreen = inject<() => void>('toggleFullscreen', () => {
+  console.warn('toggleFullscreen is not provided');
+});
 
 const inputText = ref('');
 const chatInputRef = ref<HTMLTextAreaElement | null>(null);
@@ -132,7 +135,7 @@ watch(
   (newVal) => {
     if (inputText.value !== newVal) {
       inputText.value = newVal;
-      nextTick(adjustInputHeight);
+      void nextTick(adjustInputHeight);
     }
   },
 );
@@ -141,15 +144,15 @@ watch(inputText, (newVal) => {
   chatStore.syncInputToHost(newVal);
 });
 
-const adjustInputHeight = () => {
+const adjustInputHeight = (): void => {
   const el = chatInputRef.value;
   if (!el) return;
   el.style.height = 'auto';
-  el.style.height = el.scrollHeight + 'px';
+  el.style.height = `${el.scrollHeight}px`;
   triggerScrollPadding();
 };
 
-const handleSend = () => {
+const handleSend = (): void => {
   if (chatStore.isGenerating) {
     chatStore.stopGeneration();
     return;
@@ -158,9 +161,9 @@ const handleSend = () => {
 
   chatStore.sendMessageToHost(inputText.value.trim());
   inputText.value = '';
-  nextTick(() => {
+  void nextTick(() => {
     adjustInputHeight();
-    scrollToLatest();
+    void scrollToLatest();
   });
 };
 
@@ -172,13 +175,13 @@ const listData = computed(() => chatStore.messages);
 const rowVirtualizer = useVirtualizer(
   computed(() => ({
     count: listData.value.length,
-    getScrollElement: () => scrollContainerRef.value,
-    estimateSize: () => 120,
+    getScrollElement: (): HTMLElement | null => scrollContainerRef.value,
+    estimateSize: (): number => 120,
     overscan: 1,
   })),
 );
 
-const triggerScrollPadding = () => {
+const triggerScrollPadding = (): void => {
   const wrapper = document.getElementById('chat-input-wrapper');
   if (wrapper) {
     inputBottomSpace.value = wrapper.offsetHeight + 15;
@@ -192,7 +195,7 @@ onMounted(() => {
   }
 });
 
-const scrollToLatest = async () => {
+const scrollToLatest = async (): Promise<void> => {
   isViewingHistory.value = false;
   selectedDate.value = null;
 
@@ -204,23 +207,26 @@ const scrollToLatest = async () => {
   if (container) container.scrollTop = container.scrollHeight;
 };
 
-watch([() => chatStore.messages.length, () => chatStore.streamText], async () => {
-  if (!isViewingHistory.value) {
-    await nextTick();
-    if (chatStore.messages.length > 0) {
-      rowVirtualizer.value.scrollToIndex(chatStore.messages.length - 1, { align: 'end' });
+watch(
+  [(): number => chatStore.messages.length, (): string => chatStore.streamText],
+  async (): Promise<void> => {
+    if (!isViewingHistory.value) {
+      await nextTick();
+      if (chatStore.messages.length > 0) {
+        rowVirtualizer.value.scrollToIndex(chatStore.messages.length - 1, { align: 'end' });
+      }
+      const container = scrollContainerRef.value;
+      if (container) container.scrollTop = container.scrollHeight;
     }
-    const container = scrollContainerRef.value;
-    if (container) container.scrollTop = container.scrollHeight;
-  }
-});
+  },
+);
 
-const fpRef = ref<any>(null);
+const fpRef = ref<InstanceType<typeof FlatPickr> | null>(null);
 const selectedDate = ref<string | null>(null);
 const isViewingHistory = ref(false);
 
-const openCalendar = () => {
-  if (fpRef.value && fpRef.value.fp) {
+const openCalendar = (): void => {
+  if (fpRef.value?.fp) {
     fpRef.value.fp.open();
   }
 };
@@ -241,8 +247,8 @@ const fpConfig = computed(() => {
     minDate: enabledDates[0] || undefined,
     maxDate: enabledDates[enabledDates.length - 1] || undefined,
 
-    onDayCreate: (_dObj: Date[], _dStr: string, _fp: any, dayElem: HTMLElement) => {
-      const targetDateObj = (dayElem as any).dateObj as Date;
+    onDayCreate: (_dObj: Date[], _dStr: string, _fp: unknown, dayElem: HTMLElement): void => {
+      const targetDateObj = (dayElem as HTMLElement & { dateObj?: Date }).dateObj;
       if (!targetDateObj) return;
 
       const dateStr = [
@@ -268,7 +274,7 @@ const fpConfig = computed(() => {
       }
     },
 
-    onChange: (selectedDates: Date[], _dateStr: string) => {
+    onChange: (selectedDates: Date[], _dateStr: string): void => {
       if (!selectedDates.length) return;
       isViewingHistory.value = true;
 
@@ -296,7 +302,7 @@ const fpConfig = computed(() => {
         dayMessages.forEach(({ m, i }) => {
           const mTime = m.timestamp
             ? Number(m.timestamp)
-            : new Date(`${m.date || targetDateStr} 00:00:00`).getTime();
+            : new Date(`${m.date ?? targetDateStr} 00:00:00`).getTime();
           const diff = Math.abs(mTime - targetTime);
           if (diff < minDiff) {
             minDiff = diff;
@@ -307,7 +313,7 @@ const fpConfig = computed(() => {
         rowVirtualizer.value.scrollToIndex(closestIndex, { align: 'start' });
       } else {
         const index = chatStore.messages.findIndex(
-          (m) => m.date === targetDateStr || (m.date && m.date.startsWith(targetDateStr)),
+          (m) => m.date === targetDateStr || m.date?.startsWith(targetDateStr),
         );
         if (index !== -1) rowVirtualizer.value.scrollToIndex(index, { align: 'start' });
       }
@@ -318,7 +324,9 @@ const fpConfig = computed(() => {
 onMounted(() => {
   triggerScrollPadding();
   requestAnimationFrame(() => {
-    requestAnimationFrame(scrollToLatest);
+    requestAnimationFrame(() => {
+      void scrollToLatest();
+    });
   });
 });
 </script>

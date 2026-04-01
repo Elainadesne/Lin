@@ -92,6 +92,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+
 import { useAppStore } from '../../stores/useAppStore';
 import { useChatStore } from '../../stores/useChatStore';
 
@@ -101,14 +102,14 @@ const appStore = useAppStore();
 const stethClicks = ref(0);
 const glassesClicks = ref(0);
 
-const handleStethClick = () => {
+const handleStethClick = (): void => {
   stethClicks.value++;
   if (stethClicks.value === 2) {
     console.log('[Dev] 听诊器就绪 (2/2)');
   }
 };
 
-const handleGlassesClick = () => {
+const handleGlassesClick = (): void => {
   if (stethClicks.value >= 2 && !appStore.isDevModeUnlocked) {
     glassesClicks.value++;
     if (glassesClicks.value === 24) {

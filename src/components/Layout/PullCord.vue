@@ -1,8 +1,8 @@
 <template>
   <div
+    ref="lampCordRef"
     class="pull-cord-container"
     :class="{ pulled: isPulled }"
-    ref="lampCordRef"
     @mousedown.prevent="handlePull"
     @touchstart.prevent="handlePull"
   >
@@ -113,26 +113,27 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+
 import { useAppStore } from '../../stores/useAppStore';
 
 const appStore = useAppStore();
 const lampCordRef = ref<HTMLElement | null>(null);
 const isPulled = ref(false);
 
-const handlePull = () => {
+const handlePull = (): void => {
   if (isPulled.value) return;
   isPulled.value = true;
 };
 
-const handleTransitionEnd = (e: TransitionEvent) => {
+const handleTransitionEnd = (e: TransitionEvent): void => {
   if (e.propertyName === 'height' && isPulled.value) {
     isPulled.value = false;
     triggerThemeSwitch();
   }
 };
 
-const triggerThemeSwitch = () => {
-  const switchTheme = () => {
+const triggerThemeSwitch = (): void => {
+  const switchTheme = (): void => {
     appStore.toggleDark();
   };
 
@@ -152,7 +153,7 @@ const triggerThemeSwitch = () => {
     document.startViewTransition(switchTheme);
   } else {
     document.body.style.transition = 'background-color 1.2s ease';
-    const notebook = document.querySelector('.notebook') as HTMLElement;
+    const notebook = document.querySelector<HTMLElement>('.notebook');
     const pageFronts = document.querySelectorAll('.page-front');
 
     if (notebook) notebook.style.transition = 'background-color 1.2s ease';
@@ -160,7 +161,7 @@ const triggerThemeSwitch = () => {
 
     switchTheme();
 
-    const cleanupTransition = (ev: TransitionEvent) => {
+    const cleanupTransition = (ev: TransitionEvent): void => {
       if (ev.propertyName === 'background-color') {
         document.body.style.transition = '';
         if (notebook) notebook.style.transition = '';

@@ -5,15 +5,15 @@
     <label>主题外观</label>
     <div class="theme-selector">
       <label class="theme-radio" :class="{ active: appStore.themeMode === 'light' }">
-        <input type="radio" value="light" v-model="appStore.themeMode" name="themeMode" />
+        <input v-model="appStore.themeMode" type="radio" value="light" name="themeMode" />
         <span>☀️ 浅色</span>
       </label>
       <label class="theme-radio" :class="{ active: appStore.themeMode === 'dark' }">
-        <input type="radio" value="dark" v-model="appStore.themeMode" name="themeMode" />
+        <input v-model="appStore.themeMode" type="radio" value="dark" name="themeMode" />
         <span>🌙 深色</span>
       </label>
       <label class="theme-radio" :class="{ active: appStore.themeMode === 'auto' }">
-        <input type="radio" value="auto" v-model="appStore.themeMode" name="themeMode" />
+        <input v-model="appStore.themeMode" type="radio" value="auto" name="themeMode" />
         <span>💻 跟随系统</span>
       </label>
     </div>
@@ -22,10 +22,10 @@
   <div class="setting-item">
     <label>字体大小 (Aa)</label>
     <div class="slider-with-input">
-      <input type="range" v-model.number="appStore.settings.fontSize" min="12" max="24" />
+      <input v-model.number="appStore.settings.fontSize" type="range" min="12" max="24" />
       <input
-        type="number"
         v-model.number="appStore.settings.fontSize"
+        type="number"
         min="12"
         max="24"
         class="num-input"
@@ -36,10 +36,10 @@
   <div class="setting-item">
     <label>翻页速度 📖</label>
     <div class="slider-with-input">
-      <input type="range" v-model.number="appStore.settings.turnSpeed" min="1" max="10" />
+      <input v-model.number="appStore.settings.turnSpeed" type="range" min="1" max="10" />
       <input
-        type="number"
         v-model.number="appStore.settings.turnSpeed"
+        type="number"
         min="1"
         max="10"
         class="num-input"
@@ -50,10 +50,10 @@
   <div class="setting-item">
     <label>音乐音量 🎵</label>
     <div class="slider-with-input">
-      <input type="range" v-model.number="appStore.settings.vol" min="0" max="100" />
+      <input v-model.number="appStore.settings.vol" type="range" min="0" max="100" />
       <input
-        type="number"
         v-model.number="appStore.settings.vol"
+        type="number"
         min="0"
         max="100"
         class="num-input"
@@ -65,7 +65,7 @@
     <div class="setting-row">
       <label>背景音乐自动播放</label>
       <label class="switch">
-        <input type="checkbox" v-model="appStore.settings.autoPlay" />
+        <input v-model="appStore.settings.autoPlay" type="checkbox" />
         <span class="slider"></span>
       </label>
     </div>
@@ -73,8 +73,8 @@
       <label>同步天气与节假日 (开启需定位)</label>
       <label class="switch">
         <input
-          type="checkbox"
           v-model="appStore.settings.syncEnvData"
+          type="checkbox"
           @change="handleEnvSyncChange"
         />
         <span class="slider"></span>
@@ -83,14 +83,14 @@
     <div class="setting-row" style="margin-top: 15px">
       <label>启动时自动翻开</label>
       <label class="switch">
-        <input type="checkbox" v-model="appStore.settings.autoOpen" />
+        <input v-model="appStore.settings.autoOpen" type="checkbox" />
         <span class="slider"></span>
       </label>
     </div>
     <div class="setting-row" style="margin-top: 15px">
       <label>全部使用系统字体</label>
       <label class="switch">
-        <input type="checkbox" v-model="appStore.settings.useSysFont" />
+        <input v-model="appStore.settings.useSysFont" type="checkbox" />
         <span class="slider"></span>
       </label>
     </div>
@@ -106,15 +106,15 @@ import { useEnvStore } from '../../stores/useEnvStore';
 const appStore = useAppStore();
 const envStore = useEnvStore();
 
-const handleEnvSyncChange = async () => {
+const handleEnvSyncChange = async (): Promise<void> => {
   try {
     await envStore.syncEnvDataToWorldbook(appStore.settings.syncEnvData);
-  } catch (err) {
+  } catch {
     appStore.settings.syncEnvData = false;
   }
 };
 
-const handleReset = () => {
+const handleReset = (): void => {
   if (confirm('确定要恢复所有系统设置为默认值吗？')) {
     appStore.resetSettings();
   }

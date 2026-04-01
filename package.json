@@ -18,6 +18,9 @@
     "build": "vue-tsc --noEmit && vite build",
     "dev": "vite",
     "format": "prettier . --write",
+    "licenses:update": "node --no-deprecation scripts/update-licenses.ts",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "preview": "vite preview"
   },
   "browserslist": [
@@ -27,7 +30,7 @@
   ],
   "dependencies": {
     "@tanstack/vue-virtual": "^3.13.23",
-    "@tresjs/core": "^5.7.0",
+    "@tresjs/core": "^5.8.0",
     "@vueuse/core": "^14.2.1",
     "dompurify": "^3.3.3",
     "flatpickr": "^4.6.13",
@@ -40,17 +43,27 @@
     "vue-flatpickr-component": "^12.0.0"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/howler": "^2.2.12",
     "@types/node": "^25.5.0",
     "@types/three": "^0.183.1",
     "@vitejs/plugin-vue": "^6.0.5",
     "autoprefixer": "^10.4.27",
+    "eslint": "^10.1.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-import-resolver-typescript": "^4.4.4",
+    "eslint-plugin-import-x": "^4.16.2",
+    "eslint-plugin-sonarjs": "^4.0.2",
+    "eslint-plugin-vue": "^10.8.0",
+    "eslint-plugin-vuejs-accessibility": "^2.5.0",
+    "globals": "^17.4.0",
+    "license-checker-rseidelsohn": "^4.4.2",
     "postcss": "^8.5.8",
     "prettier": "3.8.1",
     "prettier-plugin-css-order": "^2.2.0",
-    "prettier-plugin-organize-imports": "^4.3.0",
     "prettier-plugin-packagejson": "^3.0.2",
     "typescript": "^6.0.2",
+    "typescript-eslint": "^8.58.0",
     "vite": "^8.0.3",
     "vite-plugin-font": "^5.1.2",
     "vue-tsc": "^3.2.6"
@@ -59,7 +72,8 @@
     "onlyBuiltDependencies": [
       "cn-font-split",
       "koffi",
-      "protobufjs"
+      "protobufjs",
+      "unrs-resolver"
     ]
   }
 }

@@ -1,5 +1,6 @@
 import rough from 'roughjs';
-import { ref } from 'vue';
+import { ref, type Ref } from 'vue';
+
 import type { PlantConfig, PlantVariant } from '../types';
 
 export const PLANT_CONFIG: PlantConfig[] = [
@@ -177,13 +178,17 @@ export const PLANT_CONFIG: PlantConfig[] = [
   },
 ];
 
-export function usePlantEngine() {
+export function usePlantEngine(): {
+  generatedSvg: Ref<string>;
+  gardenLabel: Ref<string>;
+  generatePlant: (forceMonth?: number, forceVariant?: number) => void;
+} {
   const generatedSvg = ref('');
   const gardenLabel = ref('');
 
-  const generatePlant = (forceMonth?: number, forceVariant?: number) => {
+  const generatePlant = (forceMonth?: number, forceVariant?: number): void => {
     const date = new Date();
-    const month = forceMonth !== undefined ? forceMonth : date.getMonth();
+    const month = forceMonth ?? date.getMonth();
     const monthNames = [
       '一月',
       '二月',
@@ -208,11 +213,11 @@ export function usePlantEngine() {
     }
 
     if (!selectedVar && forceMonth === undefined && month === 1 && date.getDate() === 24) {
-      selectedVar = cfg.vars.find((v) => v.n === '林涵霁雨') || null;
+      selectedVar = cfg.vars.find((v) => v.n === '林涵霁雨') ?? null;
     }
 
     if (!selectedVar) {
-      let totalWeight = cfg.vars.reduce((sum, v) => sum + v.w, 0);
+      const totalWeight = cfg.vars.reduce((sum, v) => sum + v.w, 0);
       let randomSpin = Math.random() * totalWeight;
       for (const v of cfg.vars) {
         if (randomSpin < v.w) {
@@ -221,14 +226,27 @@ export function usePlantEngine() {
         }
         randomSpin -= v.w;
       }
-      if (!selectedVar) selectedVar = cfg.vars[0];
+      selectedVar ??= cfg.vars[0];
     }
 
     cfg.fCol = selectedVar.c;
     cfg.name = selectedVar.n;
     if (selectedVar.tCol) cfg.tCol = selectedVar.tCol;
     if (selectedVar.lCol) cfg.lCol = selectedVar.lCol;
-    cfg.m = selectedVar.m || {};
+    cfg.m = selectedVar.m ?? {};
+
+    const mConf = cfg.m as {
+      layers?: number;
+      dense?: boolean;
+      phyllotaxis?: boolean;
+      petals?: number;
+      fProb?: number;
+      bProb?: number;
+      hMod?: number;
+      cMod?: number;
+      lDense?: number;
+      fScale?: number;
+    };
 
     let svgContent = `
       <svg viewBox="-20 -20 440 690" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" class="botany-svg" style="overflow: visible;">
@@ -262,7 +280,7 @@ export function usePlantEngine() {
       width: number,
       color: string,
       delay: number,
-    ) => {
+    ): void => {
       const len = Math.hypot(x2 - x1, y2 - y1) * 1.5;
       const d = `M ${x1.toFixed(1)},${y1.toFixed(1)} Q ${cx.toFixed(1)},${cy.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}`;
       const node = rc.path(d, {
@@ -280,7 +298,7 @@ export function usePlantEngine() {
       paths.push(node.outerHTML);
     };
 
-    const getLeafPath = (shape: string) => {
+    const getLeafPath = (shape: string): string => {
       const dict: Record<string, string> = {
         willow: 'M0,0 C-4,-15 -4,-35 0,-45 C4,-35 4,-15 0,0 Z',
         sword: 'M0,0 Q-10,-40 0,-100 Q10,-40 0,0 Z',
@@ -295,7 +313,7 @@ export function usePlantEngine() {
       return dict[shape] || '';
     };
 
-    const addLeaf = (x: number, y: number, angle: number, scale: number, delay: number) => {
+    const addLeaf = (x: number, y: number, angle: number, scale: number, delay: number): void => {
       if (cfg.lShape === 'none') return;
       const node = rc.path(getLeafPath(cfg.lShape), {
         fill: cfg.lCol,
@@ -310,10 +328,10 @@ export function usePlantEngine() {
       );
     };
 
-    const addFlower = (x: number, y: number, angle: number, scale: number, delay: number) => {
+    const addFlower = (x: number, y: number, angle: number, scale: number, delay: number): void => {
       let fHtml = '';
-      const c1 = cfg.fCol![0];
-      const c2 = cfg.fCol![1] || c1;
+      const c1 = cfg.fCol?.[0] ?? '#FFFFFF';
+      const c2 = cfg.fCol?.[1] ?? c1;
 
       const rP = (
         d: string,
@@ -322,16 +340,16 @@ export function usePlantEngine() {
         rot?: number,
         s?: number,
         op?: number,
-      ) => {
+      ): string => {
         const n = rc.path(d, {
           fill,
-          stroke: stroke || 'none',
+          stroke: stroke ?? 'none',
           strokeWidth: 0.5,
           fillStyle: 'hachure',
           roughness: 1.5,
           hachureGap: 2.5,
         });
-        if (rot || s) n.setAttribute('transform', `rotate(${rot || 0}) scale(${s || 1})`);
+        if (rot || s) n.setAttribute('transform', `rotate(${rot ?? 0}) scale(${s ?? 1})`);
         if (op) n.setAttribute('opacity', op.toString());
         return n.outerHTML;
       };
@@ -345,15 +363,15 @@ export function usePlantEngine() {
         rot?: number,
         s?: number,
         op?: number,
-      ) => {
+      ): string => {
         const n = rc.circle(cx, cy, r * 2, {
           fill,
-          stroke: stroke || 'none',
+          stroke: stroke ?? 'none',
           strokeWidth: 0.5,
           fillStyle: 'hachure',
           roughness: 1.5,
         });
-        if (rot || s) n.setAttribute('transform', `rotate(${rot || 0}) scale(${s || 1})`);
+        if (rot || s) n.setAttribute('transform', `rotate(${rot ?? 0}) scale(${s ?? 1})`);
         if (op) n.setAttribute('opacity', op.toString());
         return n.outerHTML;
       };
@@ -363,7 +381,7 @@ export function usePlantEngine() {
           fHtml += rP('M0,0 C-6,-10 -10,-18 0,-22 C10,-18 6,-10 0,0 Z', c1, c1, i * 72, 1, 0.9);
         fHtml += rC(0, 0, 3, c2);
       } else if (cfg.fType === 'lotus') {
-        const layers = cfg.m!.layers || 3;
+        const layers = mConf.layers ?? 3;
         for (let l = layers; l >= 1; l--) {
           const count = l * 2 + 1;
           const s = 1 - (layers - l) * 0.15;
@@ -371,7 +389,7 @@ export function usePlantEngine() {
           const spread = 25 + l * 12;
           for (let i = 0; i < count; i++) {
             const rot = -spread + ((spread * 2) / (count - 1 || 1)) * i + (Math.random() * 4 - 2);
-            const shape = cfg.m!.dense
+            const shape = mConf.dense
               ? 'M0,0 C-5,-20 -3,-45 0,-50 C3,-45 5,-20 0,0 Z'
               : 'M0,0 C-10,-15 -8,-45 0,-50 C8,-45 10,-15 0,0 Z';
             fHtml += rP(shape, pC, pC, rot, s, 0.9);
@@ -387,7 +405,7 @@ export function usePlantEngine() {
         stamen.setAttribute('opacity', '0.85');
         fHtml += stamen.outerHTML;
       } else if (cfg.fType === 'mum') {
-        const mDense = cfg.m!.dense ? 40 : 24;
+        const mDense = cfg.m?.dense ? 40 : 24;
         for (let i = 0; i < mDense; i++) {
           const r = 1 - Math.random() * 0.35;
           const rot = i * (360 / mDense) + Math.random() * 8;
@@ -400,14 +418,14 @@ export function usePlantEngine() {
         fHtml += rP('M0,0 C-20,10 -25,35 0,40 C25,35 20,10 0,0 Z', c1, c1, 60, 1, 0.9);
         fHtml += rP('M0,0 C-20,10 -25,35 0,40 C25,35 20,10 0,0 Z', c1, c1, -60, 1, 0.9);
       } else if (cfg.fType === 'rose') {
-        const count = cfg.m!.petals || 8;
+        const count = mConf.petals ?? 8;
         for (let i = 1; i <= count; i++) {
           let s,
             rot,
             cx = 0,
             cy = -6,
             c;
-          if (cfg.m!.phyllotaxis) {
+          if (mConf.phyllotaxis) {
             const r = 2.0 * Math.sqrt(i);
             rot = i * 137.5;
             cx = r * Math.sin((rot * Math.PI) / 180);
@@ -462,7 +480,7 @@ export function usePlantEngine() {
       depth: number,
       width: number,
       delay: number,
-    ) => {
+    ): void => {
       if (depth === 0) return;
       const x2 = x + Math.sin(angle) * length;
       const y2 = y - Math.cos(angle) * length;
@@ -474,7 +492,7 @@ export function usePlantEngine() {
 
       addStem(x, y, cx, cy, x2, y2, width, cfg.tCol, delay);
       const isEndpoint = depth === 1;
-      const fProb = cfg.m!.fProb !== undefined ? cfg.m!.fProb : 0.6;
+      const fProb = mConf.fProb ?? 0.6;
       const organScale = 1.3;
 
       if (cfg.fType === 'peach' || cfg.fType === 'micro') {
@@ -520,7 +538,7 @@ export function usePlantEngine() {
         );
       }
 
-      const bProb = cfg.m!.bProb !== undefined ? cfg.m!.bProb : 0.65;
+      const bProb = mConf.bProb ?? 0.65;
       let maxBranches = 1;
       if (depth === 5) maxBranches = 2 + Math.floor(Math.random() * 3);
       else {
@@ -540,7 +558,7 @@ export function usePlantEngine() {
       }
     };
 
-    const buildBasal = () => {
+    const buildBasal = (): void => {
       const numStems =
         cfg.fType === 'lotus'
           ? 4 + Math.floor(Math.random() * 3)
@@ -592,11 +610,11 @@ export function usePlantEngine() {
       }
     };
 
-    const buildHerb = () => {
-      const hMod = cfg.m!.hMod || 1.0;
-      const cMod = cfg.m!.cMod || 1.0;
-      const lDense = cfg.m!.lDense || 1.0;
-      const fScale = cfg.m!.fScale || 1.0;
+    const buildHerb = (): void => {
+      const hMod = mConf.hMod ?? 1.0;
+      const cMod = mConf.cMod ?? 1.0;
+      const lDense = mConf.lDense ?? 1.0;
+      const fScale = mConf.fScale ?? 1.0;
       const height = (180 + Math.random() * 70) * hMod;
       const curveX = (Math.random() - 0.5) * 80 * cMod;
       const endX = curveX * 0.5 + (Math.random() - 0.5) * 40 * cMod;
@@ -638,7 +656,7 @@ export function usePlantEngine() {
       );
     };
 
-    const buildVine = () => {
+    const buildVine = (): void => {
       const numVines = 3 + Math.floor(Math.random() * 4);
       for (let i = 0; i < numVines; i++) {
         const sign = i % 2 === 0 ? 1 : -1;
@@ -681,8 +699,8 @@ export function usePlantEngine() {
     };
 
     if (cfg.arch === 'tree') {
-      const bLen = cfg.baseLen || 70;
-      const lVar = cfg.lenVar || 30;
+      const bLen = cfg.baseLen ?? 70;
+      const lVar = cfg.lenVar ?? 30;
       const tLength = bLen + Math.random() * lVar;
       const tWidth = tLength * 0.16 + Math.random() * 4;
       buildTree(0, 0, (Math.random() - 0.5) * 0.2, tLength, 5, tWidth, 0.2);

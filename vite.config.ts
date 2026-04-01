@@ -33,7 +33,7 @@ export default defineConfig(({ mode }) => {
       chunkSizeWarningLimit: 1500,
       rollupOptions: {
         output: {
-          manualChunks(id: string) {
+          manualChunks(id: string): string | undefined {
             if (id.includes('node_modules')) {
               if (id.includes('vue')) return 'vendor-vue';
               if (id.includes('@vueuse')) return 'vendor-vueuse';
@@ -45,6 +45,7 @@ export default defineConfig(({ mode }) => {
               if (id.includes('dompurify')) return 'vendor-dompurify';
               if (id.includes('roughjs')) return 'vendor-roughjs';
               if (id.includes('flatpickr')) return 'vendor-flatpickr';
+              if (id.includes('@tanstack')) return 'vendor-tanstack';
               return 'vendor';
             }
           },
@@ -70,6 +71,7 @@ export default defineConfig(({ mode }) => {
         'roughjs',
         'flatpickr',
         'vue-flatpickr-component',
+        '@tanstack/vue-virtual',
       ],
     },
   };

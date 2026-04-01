@@ -21,7 +21,7 @@
         <span>{{ formatTime(audioStore.totalTime) }}</span>
       </div>
 
-      <div class="p-progress-bar" ref="progressBarRef" @click="handleSeek">
+      <div ref="progressBarRef" class="p-progress-bar" @click="handleSeek">
         <div class="p-bar" :style="{ width: progressPercent + '%' }"></div>
       </div>
     </div>
@@ -37,11 +37,11 @@
             random: audioStore.playerSettings.mode === 1,
             single: audioStore.playerSettings.mode === 2,
           }"
-          @click="toggleMode"
           title="切换播放模式"
+          @click="toggleMode"
         ></div>
 
-        <div class="p-btn p-prev" @click="audioStore.playPrev" title="上一首"></div>
+        <div class="p-btn p-prev" title="上一首" @click="audioStore.playPrev"></div>
 
         <div
           class="p-btn p-play"
@@ -49,7 +49,7 @@
           @click="audioStore.togglePlay"
         ></div>
 
-        <div class="p-btn p-next" @click="() => audioStore.playNext(false)" title="下一首"></div>
+        <div class="p-btn p-next" title="下一首" @click="() => audioStore.playNext(false)"></div>
       </div>
     </div>
 
@@ -75,8 +75,8 @@
         </div>
         <div
           class="li-toggle"
-          @click.stop="toggleTrackDisable(track.src)"
           :title="isTrackDisabled(track.src) ? '解除拉黑' : '拉黑此歌曲'"
+          @click.stop="toggleTrackDisable(track.src)"
         >
           {{ isTrackDisabled(track.src) ? '🙉' : '🎵️' }}
         </div>
@@ -87,6 +87,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
+
 import { usePlantEngine } from '../../composables/usePlantEngine';
 import { useAppStore } from '../../stores/useAppStore';
 import { useAudioStore } from '../../stores/useAudioStore';
@@ -97,7 +98,7 @@ const { generatedSvg, gardenLabel, generatePlant } = usePlantEngine();
 
 const progressBarRef = ref<HTMLElement | null>(null);
 
-const formatTime = (secs: number) => {
+const formatTime = (secs: number): string => {
   if (isNaN(secs) || secs < 0) return '00:00';
   const minutes = Math.floor(secs / 60);
   const seconds = Math.floor(secs % 60);
@@ -109,22 +110,22 @@ const progressPercent = computed(() => {
   return (audioStore.currentTime / audioStore.totalTime) * 100;
 });
 
-const handleSeek = (e: MouseEvent) => {
+const handleSeek = (e: MouseEvent): void => {
   if (!progressBarRef.value || audioStore.totalTime === 0) return;
   const rect = progressBarRef.value.getBoundingClientRect();
   const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
   audioStore.seekTrack(percent * audioStore.totalTime);
 };
 
-const toggleMode = () => {
+const toggleMode = (): void => {
   audioStore.playerSettings.mode = (audioStore.playerSettings.mode + 1) % 3;
 };
 
-const isTrackDisabled = (src: string) => {
+const isTrackDisabled = (src: string): boolean => {
   return audioStore.playerSettings.disabled.includes(src);
 };
 
-const toggleTrackDisable = (src: string) => {
+const toggleTrackDisable = (src: string): void => {
   const arr = audioStore.playerSettings.disabled;
   const idx = arr.indexOf(src);
   if (idx !== -1) {
@@ -137,7 +138,7 @@ const toggleTrackDisable = (src: string) => {
   }
 };
 
-const handlePlaylistItemClick = (index: number, src: string) => {
+const handlePlaylistItemClick = (index: number, src: string): void => {
   if (isTrackDisabled(src)) return;
   if (audioStore.currentTrackIndex === index) {
     audioStore.togglePlay();
@@ -151,7 +152,7 @@ onMounted(() => {
   if (audioStore.playlist.length === 0) {
     audioStore.initTimePeriod();
 
-    nextTick(() => {
+    void nextTick(() => {
       const validIndices = audioStore.playlist
         .map((t, i) => ({ t, i }))
         .filter(({ t }) => !audioStore.playerSettings.disabled.includes(t.src))
@@ -168,15 +169,17 @@ onMounted(() => {
     });
   }
 
-  const unlockAudio = () => {
+  const unlockAudio = (): void => {
     if (appStore.settings.autoPlay && !audioStore.isPlaying && audioStore.currentTrack) {
       audioStore.playTrack();
     }
-    ['click', 'touchstart', 'keydown'].forEach((evt) =>
-      document.removeEventListener(evt, unlockAudio),
-    );
+    ['click', 'touchstart', 'keydown'].forEach((evt) => {
+      document.removeEventListener(evt, unlockAudio);
+    });
   };
-  ['click', 'touchstart', 'keydown'].forEach((evt) => document.addEventListener(evt, unlockAudio));
+  ['click', 'touchstart', 'keydown'].forEach((evt) => {
+    document.addEventListener(evt, unlockAudio);
+  });
 });
 
 watch(

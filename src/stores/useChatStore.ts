@@ -1,13 +1,14 @@
 import { useDateFormat } from '@vueuse/core';
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
+
 import type { AppMessageEvent, ChatMessage, DossierState } from '../types';
 
 export const useChatStore = defineStore('chatStore', () => {
   const messages = ref<ChatMessage[]>([]);
   const isGenerating = ref(false);
 
-  const dossier = ref<DossierState>({
+  const dossier = ref({
     病历状态: '加载中...',
     本次记录: '加载中...',
     上次互动: '加载中...',
@@ -31,17 +32,17 @@ export const useChatStore = defineStore('chatStore', () => {
     messages.value.forEach((msg) => {
       if (msg.date) dates.add(msg.date);
     });
-    return Array.from(dates).sort();
+    return Array.from(dates).sort((a, b) => a.localeCompare(b));
   });
 
   const parseStatusString = (rawStr: string): Partial<DossierState> | null => {
-    const statusMatch = rawStr.match(/<状态栏>([\s\S]*?)<\/状态栏>/);
+    const statusMatch = /<状态栏>([\s\S]*?)<\/状态栏>/.exec(rawStr);
     if (!statusMatch) return null;
 
     const statusContent = statusMatch[1];
-    const extract = (key: string) => {
+    const extract = (key: string): string => {
       const regex = new RegExp(`${key}【([\\s\\S]*?)】`);
-      const match = statusContent.match(regex);
+      const match = regex.exec(statusContent);
       return match ? match[1].trim() : '';
     };
 
@@ -61,7 +62,7 @@ export const useChatStore = defineStore('chatStore', () => {
     };
   };
 
-  const handleHostMessage = (event: AppMessageEvent) => {
+  const handleHostMessage = (event: AppMessageEvent): void => {
     const { type, text, state, messages: incomingMsgs } = event.data;
 
     if (type === 'GEN_STATE') {
@@ -89,40 +90,42 @@ export const useChatStore = defineStore('chatStore', () => {
     }
 
     if (type === 'SYNC_CHAT' && Array.isArray(incomingMsgs)) {
-      const newMessages: ChatMessage[] = incomingMsgs.map((m: any, index: number) => {
-        let formattedDate = useDateFormat(new Date(), 'YYYY-MM-DD').value;
-        if (m.timestamp) {
-          const match = String(m.timestamp).match(
-            /(\d{4})[年\-\/.]\s*(\d{1,2})[月\-\/.]\s*(\d{1,2})/,
-          );
-          if (match) {
-            formattedDate = `${match[1]}-${match[2].padStart(2, '0')}-${match[3].padStart(2, '0')}`;
-          } else {
-            const d = new Date(m.timestamp);
-            if (!isNaN(d.getTime())) {
-              formattedDate = useDateFormat(d, 'YYYY-MM-DD').value;
+      const newMessages: ChatMessage[] = incomingMsgs.map(
+        (m: { role?: string; text?: string; timestamp?: string | number }, index: number) => {
+          let formattedDate = useDateFormat(new Date(), 'YYYY-MM-DD').value;
+          if (m.timestamp) {
+            const match = /(\d{4})[年\-/.]\s*(\d{1,2})[月\-/.]\s*(\d{1,2})/.exec(
+              String(m.timestamp),
+            );
+            if (match) {
+              formattedDate = `${match[1]}-${match[2].padStart(2, '0')}-${match[3].padStart(2, '0')}`;
+            } else {
+              const d = new Date(m.timestamp);
+              if (!isNaN(d.getTime())) {
+                formattedDate = useDateFormat(d, 'YYYY-MM-DD').value;
+              }
             }
           }
-        }
 
-        const isAI = m.role === 'ai';
-        let parsedStatus: Partial<DossierState> | null = null;
-        if (isAI && index === incomingMsgs.length - 1) {
-          parsedStatus = parseStatusString(m.text || '');
-        }
+          const isAI = m.role === 'ai';
+          let parsedStatus: Partial<DossierState> | null = null;
+          if (isAI && index === incomingMsgs.length - 1) {
+            parsedStatus = parseStatusString(m.text ?? '');
+          }
 
-        return {
-          id: `msg_${index}_${m.timestamp || Date.now()}`,
-          role: m.role,
-          rawText: m.text || '',
-          parsedHtml: '',
-          date: formattedDate,
-          statusData: parsedStatus,
-        };
-      });
+          return {
+            id: `msg_${index}_${m.timestamp ?? Date.now()}`,
+            role: (m.role as 'user' | 'ai') ?? 'user',
+            rawText: m.text ?? '',
+            parsedHtml: '',
+            date: formattedDate,
+            statusData: parsedStatus,
+          };
+        },
+      );
 
       const latestMsgWithStatus = newMessages.filter((m) => m.statusData).pop();
-      if (latestMsgWithStatus && latestMsgWithStatus.statusData) {
+      if (latestMsgWithStatus?.statusData) {
         Object.assign(dossier.value, latestMsgWithStatus.statusData);
       }
 
@@ -130,7 +133,7 @@ export const useChatStore = defineStore('chatStore', () => {
     }
   };
 
-  const sendMessageToHost = (text: string) => {
+  const sendMessageToHost = (text: string): void => {
     if (!text.trim() || isGenerating.value) return;
 
     messages.value.push({
@@ -146,25 +149,25 @@ export const useChatStore = defineStore('chatStore', () => {
     }
   };
 
-  const stopGeneration = () => {
+  const stopGeneration = (): void => {
     if (window.parent !== window && isGenerating.value) {
       window.parent.postMessage({ type: 'STOP_GEN_TO_ST' }, '*');
     }
   };
 
-  const syncInputToHost = (text: string) => {
+  const syncInputToHost = (text: string): void => {
     if (window.parent !== window) {
       window.parent.postMessage({ type: 'SYNC_INPUT_TO_ST', text }, '*');
     }
   };
 
-  const addTempPromptToHost = (text: string, options?: { name?: string }) => {
+  const addTempPromptToHost = (text: string, options?: { name?: string }): void => {
     if (window.parent !== window) {
       window.parent.postMessage({ type: 'ADD_TEMP_PROMPT', text, name: options?.name }, '*');
     }
   };
 
-  const removeTempPromptFromHost = (name: string) => {
+  const removeTempPromptFromHost = (name: string): void => {
     if (window.parent !== window) {
       window.parent.postMessage({ type: 'REMOVE_TEMP_PROMPT', name }, '*');
     }

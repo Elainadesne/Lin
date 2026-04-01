@@ -5,8 +5,8 @@
     <div class="dev-group">
       <h4>UI 组件测试</h4>
       <div class="dev-row">
-        <button @click="testTarot" class="dev-btn">卡牌渲染</button>
-        <button @click="testScale" class="dev-btn">表单渲染</button>
+        <button class="dev-btn" @click="testTarot">卡牌渲染</button>
+        <button class="dev-btn" @click="testScale">表单渲染</button>
       </div>
     </div>
 
@@ -36,12 +36,12 @@
         </select>
       </div>
       <div class="dev-row">
-        <button @click="testPlant" class="dev-btn dev-btn-green">按设定生成</button>
+        <button class="dev-btn dev-btn-green" @click="testPlant">按设定生成</button>
         <button
-          @click="toggleAutoPlant"
           class="dev-btn"
           :class="isAutoPlanting ? 'dev-btn-orange' : 'dev-btn-orange'"
           :style="{ background: isAutoPlanting ? '#e74c3c' : '#f39c12' }"
+          @click="toggleAutoPlant"
         >
           {{ isAutoPlanting ? '停止轮播' : '自动随机轮播' }}
         </button>
@@ -63,8 +63,8 @@
     <div class="dev-group">
       <h4>对话流渲染测试</h4>
       <div class="dev-row">
-        <button @click="testStream" class="dev-btn">流式打字</button>
-        <button @click="testNonStream" class="dev-btn">非流式插入</button>
+        <button class="dev-btn" @click="testStream">流式打字</button>
+        <button class="dev-btn" @click="testNonStream">非流式插入</button>
       </div>
       <div ref="chatBoxRef" class="dev-chat-box">
         <template v-if="!isStreamingMode">
@@ -87,6 +87,7 @@
 <script setup lang="ts">
 import { useIntervalFn } from '@vueuse/core';
 import { computed, nextTick, ref } from 'vue';
+
 import { useMarkdown } from '../../composables/useMarkdown';
 import { useMessageSync } from '../../composables/useMessageSync';
 import { PLANT_CONFIG, usePlantEngine } from '../../composables/usePlantEngine';
@@ -95,12 +96,12 @@ const messageSync = useMessageSync();
 const plantEngine = usePlantEngine();
 const { renderMarkdown, renderTypingHtml } = useMarkdown();
 
-const testTarot = () => {
+const testTarot = (): void => {
   messageSync.isDevTest.value = true;
   messageSync.triggerTarot.value = true;
 };
 
-const testScale = () => {
+const testScale = (): void => {
   messageSync.isDevTest.value = true;
   messageSync.activeScaleId.value = 'dev';
 };
@@ -113,7 +114,7 @@ const availableVariants = computed(() => {
   return PLANT_CONFIG[selectedMonth.value]?.vars || [];
 });
 
-const testPlant = () => {
+const testPlant = (): void => {
   plantEngine.generatePlant(selectedMonth.value, selectedVariant.value);
   devSvgContent.value = plantEngine.generatedSvg.value;
 };
@@ -132,7 +133,7 @@ const {
   { immediate: false },
 );
 
-const toggleAutoPlant = () => {
+const toggleAutoPlant = (): void => {
   if (isAutoPlanting.value) {
     pause();
   } else {
@@ -149,7 +150,7 @@ const staticChatHtml = ref('');
 const streamChatHtml = ref('');
 let rafId: number | null = null;
 
-const testNonStream = () => {
+const testNonStream = (): void => {
   if (rafId) cancelAnimationFrame(rafId);
   isStreamingMode.value = false;
 
@@ -186,12 +187,12 @@ if (patient.feeling === 'depressed') {
 秦渡言站起身，走之前回头看了你一眼，语气里带着难得的温和：『Q:不管你是在测试 \`marked.js\`，还是在看我们忙活...谢谢你愿意听我说。』`;
 
   staticChatHtml.value = renderMarkdown(rawText, true);
-  nextTick(() => {
+  void nextTick(() => {
     if (chatBoxRef.value) chatBoxRef.value.scrollTop = chatBoxRef.value.scrollHeight;
   });
 };
 
-const testStream = () => {
+const testStream = (): void => {
   if (rafId) cancelAnimationFrame(rafId);
   isStreamingMode.value = true;
   streamChatHtml.value = '';
@@ -213,7 +214,7 @@ const testStream = () => {
   let lastTime = performance.now();
   let currentDelay = Math.random() * 40 + 10;
 
-  const typeNext = (timestamp: number) => {
+  const typeNext = (timestamp: number): void => {
     if (timestamp - lastTime >= currentDelay) {
       const currentText = text.substring(0, index);
       streamChatHtml.value = renderTypingHtml(currentText);

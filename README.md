@@ -55,33 +55,49 @@ pnpm dev
 - **音乐资源:** 来源于 [Pixabay](https://pixabay.com/)（基于 CC0 协议发布）。
 - **植物分形算法:** 灵感来源于《The Algorithmic Beauty of Plants》（作者 Springer-Verlag）。
 - **动画与视觉特效:**
-  - **彩带动画:** 灵感来自 CodePen 上的 [iprodev](https://codepen.io/iprodev/pen/azpWBr)。（采用 [MIT](public/licenses/MIT-iprodev.txt) 协议）
-  - **礼盒动画:** 灵感来自 CodePen 上的 [jkantner](https://codepen.io/jkantner/pen/oNgwLLz)。（采用 [MIT](public/licenses/MIT-jkantner.txt) 协议）
+  - **彩带动画:** 灵感来自 CodePen 上的 [iprodev](https://codepen.io/iprodev/pen/azpWBr)。（采用 [MIT](public/licenses/manual/MIT-iprodev.txt) 协议）
+  - **礼盒动画:** 灵感来自 CodePen 上的 [jkantner](https://codepen.io/jkantner/pen/oNgwLLz)。（采用 [MIT](public/licenses/manual/MIT-jkantner.txt) 协议）
 - **技术栈:**
-  - [![Vue.js](https://img.shields.io/badge/Vue.js-4FC08D?logo=vuedotjs&logoColor=white)](https://vuejs.org/) - 前端框架。（采用 [MIT](public/licenses/MIT-vue.txt) 协议）
-  - [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/) - 编程语言。（采用 [Apache-2.0](public/licenses/Apache-2.0-typescript.txt) 协议）
-  - [![Vite](https://img.shields.io/badge/Vite-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/) - 前端构建工具。（采用 [MIT](public/licenses/MIT-vite.txt) 协议）
-  - [![Pinia](https://img.shields.io/badge/Pinia-FFD859?logo=pinia&logoColor=white)](https://pinia.vuejs.org/) - 状态管理。（采用 [MIT](public/licenses/MIT-pinia.txt) 协议）
-  - [![VueUse](https://img.shields.io/badge/VueUse-4FC08D?logo=vueuse&logoColor=white)](https://vueuse.org/) - Vue API 工具集。（采用 [MIT](public/licenses/MIT-vueuse.txt) 协议）
-  - [![TanStack Virtual](https://img.shields.io/badge/TanStack_Virtual-000000?logo=tanstack&logoColor=white)](https://tanstack.com/virtual) - 虚拟滚动引擎。（采用 [MIT](public/licenses/MIT-tanstack-virtual.txt) 协议）
-  - [![Three.js](https://img.shields.io/badge/Three.js-000000?logo=threedotjs&logoColor=white)](https://threejs.org/) & [TresJS](https://tresjs.org/) - 3D 引擎。（采用 [MIT](public/licenses/MIT-threejs.txt) 、[MIT](public/licenses/MIT-tresjs.txt) 协议）
-  - [![Prettier](https://img.shields.io/badge/Prettier-F7B93E?logo=prettier&logoColor=black)](https://prettier.io/) - 代码规范与格式化工具。（采用 [MIT](public/licenses/MIT-prettier.txt) 协议）
-  - [![PostCss](https://img.shields.io/badge/PostCss-DD3A0A?logo=postcss&logoColor=black)](https://postcss.org/) - 利用 JS 插件转换 CSS 的工具。（采用 [MIT](public/licenses/MIT-postcss.txt) 协议）
-  - [Autoprefixer](https://github.com/postcss/autoprefixer) - 自动解析 CSS 并添加浏览器厂商前缀的 PostCSS 插件。（采用[MIT](public/licenses/MIT-autoprefixer.txt) 协议）
-  - [Howler.js](https://howlerjs.com/) - Web 音频播放库。（采用 [MIT](public/licenses/MIT-howler.txt) 协议）
-  - [marked](https://marked.js.org/) - Markdown 解析与编译器。（采用 [MIT](public/licenses/MIT-marked.txt) 协议）
-  - [DOMPurify](https://github.com/cure53/DOMPurify) - XSS 消毒库。（采用 [Apache-2.0 / MPL-2.0](public/licenses/Apache-2.0-DOMPurify.txt) 协议）
-  - [vite-plugin-font](https://www.npmjs.com/package/vite-plugin-font) - Web 字体切片工具。（采用 [Apache-2.0](public/licenses/Apache-2.0-vite-plugin-font.txt) 协议）
-  - [Rough.js](https://roughjs.com/) - 手绘风格矢量图形引擎。（采用 [MIT](public/licenses/MIT-roughjs.txt) 协议）
-  - [flatpickr](https://flatpickr.js.org/) - 日期选择器（结合 `vue-flatpickr-component` 封装）。（采用 [MIT](public/licenses/MIT-flatpickr.txt) 、[MIT](public/licenses/MIT-vue-flatpickr-component.txt)协议）
-  - [vue-tsc](https://github.com/vuejs/language-tools) - 针对 Vue 的 TypeScript 命令行工具。
-  - [prettier-plugin-organize-imports](https://github.com/simonhaenisch/prettier-plugin-organize-imports) - 导入语句排序。（采用 [MIT](public/licenses/MIT-prettier-plugin-organize-imports.txt) 协议）
-  - [prettier-plugin-css-order](https://github.com/huchenme/prettier-plugin-css-order) - CSS 属性排序（采用 [ISC](public/licenses/ISC-prettier-plugin-css-order.txt) 协议）
-  - [prettier-plugin-packagejson](https://github.com/shinnn/prettier-plugin-packagejson) - `package.json` 配置项排序。（采用 [MIT](public/licenses/MIT-prettier-plugin-packagejson.txt) 协议）
+  - [![Vue.js](https://img.shields.io/badge/Vue.js-4FC08D?logo=vuedotjs&logoColor=white)](https://vuejs.org/) - 前端框架。(采用 [MIT](public/licenses/npm/MIT-vue.txt) 协议)
+  - [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/) - 编程语言。(采用 [Apache-2.0](public/licenses/npm/Apache-2.0-typescript.txt) 协议)
+  - [![Vite](https://img.shields.io/badge/Vite-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/) - 前端构建工具。(采用 [MIT](public/licenses/npm/MIT-vite.txt) 协议)
+  - [![Pinia](https://img.shields.io/badge/Pinia-FFD859?logo=pinia&logoColor=white)](https://pinia.vuejs.org/) - 状态管理。(采用 [MIT](public/licenses/npm/MIT-pinia.txt) 协议)
+  - [![VueUse](https://img.shields.io/badge/VueUse-4FC08D?logo=vueuse&logoColor=white)](https://vueuse.org/) - Vue API 工具集。(采用 [MIT](public/licenses/npm/MIT-vueuse-core.txt) 协议)
+  - [![Three.js](https://img.shields.io/badge/Three.js-000000?logo=threedotjs&logoColor=white)](https://threejs.org/) & [![TresJS](https://img.shields.io/badge/TresJS-4FC08D?logo=vuedotjs&logoColor=white)](https://tresjs.org/) - 3D 引擎与 Vue 适配层。(采用 [MIT](public/licenses/npm/MIT-three.txt) 、[MIT](public/licenses/npm/MIT-tresjs-core.txt) 协议)
+  - [![Rough.js](https://img.shields.io/badge/Rough.js-FF4081)](https://roughjs.com/) - 手绘风格矢量图形引擎。(采用 [MIT](public/licenses/npm/MIT-roughjs.txt) 协议)
+  - [![TanStack Virtual](https://img.shields.io/badge/TanStack_Virtual-000000?logo=tanstack&logoColor=white)](https://tanstack.com/virtual) - 虚拟滚动引擎。(采用 [MIT](public/licenses/npm/MIT-tanstack-vue-virtual.txt) 协议)
+  - [![Howler.js](https://img.shields.io/badge/Howler.js-e91e63)](https://howlerjs.com/) - Web 音频播放库。(采用 [MIT](public/licenses/npm/MIT-howler.txt) 协议)
+  - [![flatpickr](https://img.shields.io/badge/flatpickr-5697ad)](https://flatpickr.js.org/) - 日期选择器。(采用 [MIT](public/licenses/npm/MIT-flatpickr.txt) 协议)
+  - [![vue-flatpickr-component](https://img.shields.io/badge/vue--flatpickr-4FC08D?logo=vuedotjs&logoColor=white)](https://github.com/ankurk91/vue-flatpickr-component) - flatpickr 的 Vue 组件包装。(采用 [MIT](public/licenses/npm/MIT-vue-flatpickr-component.txt) 协议)
+  - [![marked](https://img.shields.io/badge/marked-000000?logo=markdown&logoColor=white)](https://marked.js.org/) - Markdown 解析器。(采用 [MIT](public/licenses/npm/MIT-marked.txt) 协议)
+  - [![DOMPurify](https://img.shields.io/badge/DOMPurify-000000)](https://github.com/cure53/DOMPurify) - XSS 消毒库。(采用 [MPL-2.0 / Apache-2.0](public/licenses/npm/MPL-2.0-OR-Apache-2.0-dompurify.txt) 协议)
+  - [![PostCss](https://img.shields.io/badge/PostCss-DD3A0A?logo=postcss&logoColor=white)](https://postcss.org/) - CSS 转换工具。(采用 [MIT](public/licenses/npm/MIT-postcss.txt) 协议)
+  - [![Autoprefixer](https://img.shields.io/badge/Autoprefixer-DD3735?logo=autoprefixer&logoColor=white)](https://github.com/postcss/autoprefixer) - CSS 厂商前缀处理。(采用 [MIT](public/licenses/npm/MIT-autoprefixer.txt) 协议)
+  - [![vite-plugin-font](https://img.shields.io/badge/vite--plugin--font-646CFF?logo=vite&logoColor=white)](https://www.npmjs.com/package/vite-plugin-font) - 字体切片工具。(采用 [Apache-2.0](public/licenses/npm/Apache-2.0-vite-plugin-font.txt) 协议)
+  - [![@vitejs/plugin-vue](https://img.shields.io/badge/plugin--vue-646CFF?logo=vite&logoColor=white)](https://github.com/vitejs/vite-plugin-vue) - Vite 的 Vue 支持。(采用 [MIT](public/licenses/npm/MIT-vitejs-plugin-vue.txt) 协议)
+  - [![vue-tsc](https://img.shields.io/badge/vue--tsc-4FC08D?logo=vuedotjs&logoColor=white)](https://github.com/vuejs/language-tools) - Vue 类型检查工具。(采用 [MIT](public/licenses/npm/MIT-vue-tsc.txt) 协议)
+  - [![ESLint](https://img.shields.io/badge/ESLint-4B32C3?logo=eslint&logoColor=white)](https://eslint.org/) - 代码静态检查工具。(采用 [MIT](public/licenses/npm/MIT-eslint.txt) 协议)
+  - [![@eslint/js](https://img.shields.io/badge/@eslint/js-4B32C3?logo=eslint&logoColor=white)](https://github.com/eslint/eslint/tree/main/packages/js) - ESLint 核心配置与逻辑。(采用 [MIT](public/licenses/npm/MIT-eslint-js.txt) 协议)
+  - [![typescript-eslint](https://img.shields.io/badge/typescript--eslint-3178C6?logo=typescript&logoColor=white)](https://typescript-eslint.io/) - ESLint 的 TS 支持。(采用 [MIT](public/licenses/npm/MIT-typescript-eslint.txt) 协议)
+  - [![eslint-plugin-vue](https://img.shields.io/badge/plugin--vue-4FC08D?logo=vuedotjs&logoColor=white)](https://eslint.vuejs.org/) - Vue 官方 ESLint 插件。(采用 [MIT](public/licenses/npm/MIT-eslint-plugin-vue.txt) 协议)
+  - [![eslint-plugin-vuejs-accessibility](https://img.shields.io/badge/plugin--a11y-4FC08D?logo=vuedotjs&logoColor=white)](https://vue-a11y.github.io/eslint-plugin-vuejs-accessibility/) - 无障碍规则插件。(采用 [MIT](public/licenses/npm/MIT-eslint-plugin-vuejs-accessibility.txt) 协议)
+  - [![eslint-plugin-sonarjs](https://img.shields.io/badge/plugin--sonarjs-4E9BCD?logo=sonarqube&logoColor=white)](https://github.com/SonarSource/eslint-plugin-sonarjs) - 代码嗅探插件。(采用 [LGPL-3.0](public/licenses/npm/LGPL-3.0-only-eslint-plugin-sonarjs.txt) 协议)
+  - [![eslint-plugin-import-x](https://img.shields.io/badge/plugin--import--x-4B32C3?logo=eslint&logoColor=white)](https://github.com/un-ts/eslint-plugin-import-x) - 导入规范校验。(采用 [MIT](public/licenses/npm/MIT-eslint-plugin-import-x.txt) 协议)
+  - [![eslint-import-resolver-typescript](https://img.shields.io/badge/resolver--typescript-3178C6?logo=typescript&logoColor=white)](https://github.com/import-js/eslint-import-resolver-typescript) - TS 模块解析器。(采用 [ISC](public/licenses/npm/ISC-eslint-import-resolver-typescript.txt) 协议)
+  - [![eslint-config-prettier](https://img.shields.io/badge/config--prettier-F7B93E?logo=prettier&logoColor=black)](https://github.com/prettier/eslint-config-prettier) - 解决 Lint 与 Prettier 冲突。(采用 [MIT](public/licenses/npm/MIT-eslint-config-prettier.txt) 协议)
+  - [![Prettier](https://img.shields.io/badge/Prettier-F7B93E?logo=prettier&logoColor=black)](https://prettier.io/) - 代码格式化工具。(采用 [MIT](public/licenses/npm/MIT-prettier.txt) 协议)
+  - [![prettier-plugin-organize-imports](https://img.shields.io/badge/plugin--organize--imports-F7B93E?logo=prettier&logoColor=black)](https://github.com/simonhaenisch/prettier-plugin-organize-imports) - 导入语句排序。(采用 [MIT](public/licenses/npm/MIT-prettier-plugin-organize-imports.txt) 协议)
+  - [![prettier-plugin-css-order](https://img.shields.io/badge/plugin--css--order-F7B93E?logo=prettier&logoColor=black)](https://github.com/huchenme/prettier-plugin-css-order) - CSS 属性排序。(采用 [ISC](public/licenses/npm/ISC-prettier-plugin-css-order.txt) 协议)
+  - [![prettier-plugin-packagejson](https://img.shields.io/badge/plugin--packagejson-F7B93E?logo=prettier&logoColor=black)](https://github.com/shinnn/prettier-plugin-packagejson) - package.json 排序。(采用 [MIT](public/licenses/npm/MIT-prettier-plugin-packagejson.txt) 协议)
+  - [![globals](https://img.shields.io/badge/globals-F7DF1E?logo=javascript&logoColor=black)](https://github.com/sindresorhus/globals) - 全局变量字典。(采用 [MIT](public/licenses/npm/MIT-globals.txt) 协议)
+  - [![license-checker-rseidelsohn](https://img.shields.io/badge/license--checker-444444)](https://github.com/rseidelsohn/license-checker-rseidelsohn) - 许可证自动化分析工具。(采用 [BSD-3-Clause](public/licenses/npm/BSD-3-Clause-license-checker-rseidelsohn.txt) 协议)
+  - [![@types/node](https://img.shields.io/badge/@types/node-339933?logo=nodedotjs&logoColor=white)](https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/node) - Node.js 的 TypeScript 类型定义。(采用 [MIT](public/licenses/npm/MIT-types-node.txt) 协议)
+  - [![@types/howler](https://img.shields.io/badge/@types/howler-3178C6?logo=typescript&logoColor=white)](https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/howler) - Howler.js 的 TypeScript 类型定义。(采用 [MIT](public/licenses/npm/MIT-types-howler.txt) 协议)
+  - [![@types/three](https://img.shields.io/badge/@types/three-000000?logo=threedotjs&logoColor=white)](https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/three) - Three.js 的 TypeScript 类型定义。(采用 [MIT](public/licenses/npm/MIT-types-three.txt) 协议)
 - 本项目中使用的所有字体均有合法来源，并经过 `vite-plugin-font` 切片优化以提升加载性能：
-  - **霞鹜文楷 屏幕阅读版** - 设计者 lxgw。（采用 [OFL-1.1](public/licenses/OFL-1.1-LXGWWenKaiScreen.txt) 协议）
-  - **呆萌手写体** - 设计者 K99Xmas。（采用 [OFL-1.1](public/licenses/OFL-1.1-DymonShouXieTi.txt) 协议）
-  - **玄宗体** - 设计者 Yuchen Tian。（采用 [OFL-1.1](public/licenses/OFL-1.1-XuanZongTi.txt) 协议）
+  - **霞鹜文楷 屏幕阅读版** - 设计者 lxgw。（采用 [OFL-1.1](public/licenses/manual/OFL-1.1-LXGWWenKaiScreen.txt) 协议）
+  - **呆萌手写体** - 设计者 K99Xmas。（采用 [OFL-1.1](public/licenses/manual/OFL-1.1-DymonShouXieTi.txt) 协议）
+  - **玄宗体** - 设计者 Yuchen Tian。（采用 [OFL-1.1](public/licenses/manual/OFL-1.1-XuanZongTi.txt) 协议）
   - **云峰寒蝉体** - 设计者 云峰字库。（_[基于作者声明免费使用](https://mp.weixin.qq.com/s/qLRQPJf43h15yPgpcNbLNw)_）
 - **API:**
   - [BigDataCloud](https://www.bigdatacloud.com/) - 提供地理位置逆解析服务。

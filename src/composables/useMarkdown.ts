@@ -5,11 +5,11 @@ marked.use({ gfm: true, breaks: true });
 
 const applyCharacterFonts = (text: string): string => {
   return text.replace(
-    /([\'"‘“『「])\s*([LQC])[:：]\s*([\s\S]*?)([\'"’”』」]|$)/g,
+    /(['"‘“『「])\s*([LQC])[:：]([^'"’”』」]*)(['"’”』」])/g,
     (_match: string, openQ: string, role: string, content: string, closeQ: string) => {
       const roleMap: Record<string, string> = { L: 'msg-lin', Q: 'msg-qin', C: 'msg-children' };
       const cls = roleMap[role.toUpperCase()];
-      return `${openQ}<span class="${cls}">${content}</span>${closeQ}`;
+      return `${openQ}<span class="${cls}">${content.trimStart()}</span>${closeQ}`;
     },
   );
 };
@@ -21,7 +21,10 @@ const stripSystemTags = (text: string): string => {
     .replace(/\{\{setglobalvar::.*?\}\}/gi, '');
 };
 
-export function useMarkdown() {
+export function useMarkdown(): {
+  renderMarkdown: (rawText: string, isAI?: boolean) => string;
+  renderTypingHtml: (rawText: string) => string;
+} {
   const renderMarkdown = (rawText: string, isAI = true): string => {
     let text = rawText;
     if (isAI) {
@@ -35,7 +38,7 @@ export function useMarkdown() {
   };
 
   const renderTypingHtml = (rawText: string): string => {
-    let htmlOutput = renderMarkdown(rawText.trim(), true);
+    const htmlOutput = renderMarkdown(rawText.trim(), true);
 
     if (htmlOutput.trim().endsWith('</p>')) {
       return htmlOutput.replace(/<\/p>\s*$/, '<span class="typing-cursor"></span></p>');

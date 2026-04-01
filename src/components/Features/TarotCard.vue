@@ -47,13 +47,12 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
+
 import { useMessageSync } from '../../composables/useMessageSync';
 import { useChatStore } from '../../stores/useChatStore';
 import type { TarotCard } from '../../types';
 
-const emit = defineEmits<{
-  (e: 'close'): void;
-}>();
+const emit = defineEmits<(e: 'close') => void>();
 
 const chatStore = useChatStore();
 
@@ -137,7 +136,7 @@ onMounted(() => {
   isReversed.value = Math.random() > 0.5;
 });
 
-const handleFlip = () => {
+const handleFlip = (): void => {
   isFlipped.value = !isFlipped.value;
 
   if (isFlipped.value && !hasSynced.value && randomCard.value) {
@@ -154,7 +153,7 @@ const handleFlip = () => {
   }
 };
 
-const handleTitleTransitionEnd = (e: TransitionEvent) => {
+const handleTitleTransitionEnd = (e: TransitionEvent): void => {
   if (e.propertyName === 'opacity' && !showTitle.value && randomCard.value) {
     const orientation = isReversed.value ? '逆位' : '正位';
     titleText.value = `${randomCard.value.cn} (${orientation})`;
@@ -162,7 +161,7 @@ const handleTitleTransitionEnd = (e: TransitionEvent) => {
   }
 };
 
-const handleClose = () => {
+const handleClose = (): void => {
   if (isClosing.value) return;
 
   if (!hasSynced.value) {
@@ -173,7 +172,7 @@ const handleClose = () => {
   isClosing.value = true;
 };
 
-const handleAnimationEnd = (e: AnimationEvent) => {
+const handleAnimationEnd = (e: AnimationEvent): void => {
   if (e.animationName === 'handBackToTop') {
     emit('close');
   }
