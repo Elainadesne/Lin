@@ -186,7 +186,7 @@ if (patient.feeling === 'depressed') {
 “C:秦叔叔快来陪我们打游戏！”走廊传来孩子的声音。
 秦渡言站起身，走之前回头看了你一眼，语气里带着难得的温和：『Q:不管你是在测试 \`marked.js\`，还是在看我们忙活...谢谢你愿意听我说。』`;
 
-  staticChatHtml.value = renderMarkdown(rawText, true);
+  staticChatHtml.value = renderMarkdown(rawText);
   void nextTick(() => {
     if (chatBoxRef.value) chatBoxRef.value.scrollTop = chatBoxRef.value.scrollHeight;
   });
@@ -232,7 +232,7 @@ const testStream = (): void => {
     if (index <= text.length) {
       rafId = requestAnimationFrame(typeNext);
     } else {
-      streamChatHtml.value = renderMarkdown(text, true);
+      streamChatHtml.value = renderMarkdown(text);
       rafId = null;
     }
   };

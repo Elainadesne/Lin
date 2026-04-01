@@ -41,14 +41,7 @@
                 : {}
             "
           >
-            <div
-              v-html="
-                renderMarkdown(
-                  listData[virtualRow.index].rawText,
-                  listData[virtualRow.index].role === 'ai',
-                )
-              "
-            ></div>
+            <div v-html="renderMarkdown(listData[virtualRow.index].rawText)"></div>
           </div>
         </div>
       </div>
