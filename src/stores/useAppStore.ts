@@ -14,10 +14,21 @@ export const useAppStore = defineStore('appStore', () => {
   const isDark = ref(false);
 
   const applyTheme = (): void => {
+    if (!document.getElementById('lin-theme-transition')) {
+      const style = document.createElement('style');
+      style.id = 'lin-theme-transition';
+      style.innerHTML = 'body { transition: background-color 0.4s ease, color 0.4s ease; }';
+      document.head.appendChild(style);
+    }
+
     if (isDark.value) {
       document.body.classList.add('dark-mode');
     } else {
       document.body.classList.remove('dark-mode');
+    }
+
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({ type: 'THEME_CHANGED', isDark: isDark.value }, '*');
     }
   };
 
