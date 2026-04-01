@@ -257,14 +257,14 @@ const fpConfig = computed(() => {
         String(targetDateObj.getDate()).padStart(2, '0'),
       ].join('-');
 
+      dayElem.style.position = 'relative';
+
       if (enabledDates.includes(dateStr)) {
         dayElem.innerHTML += `<span class="event-marker"></span>`;
       }
 
       const weather = envStore.weatherMap[dateStr];
       const holidayName = envStore.holidayMap[dateStr];
-
-      dayElem.style.position = 'relative';
 
       if (holidayName) {
         dayElem.innerHTML += `<span title="${holidayName}" style="position:absolute; top:-2px; right:2px; font-size:10px; cursor:help; z-index:10; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.3));">🎊</span>`;
@@ -378,5 +378,21 @@ onMounted(() => {
   width: 100%;
   height: 100%;
   pointer-events: none;
+}
+
+:deep(.event-marker) {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  z-index: 10;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  border-radius: 50%;
+  background-color: #e74c3c;
+  width: 5px;
+  height: 5px;
+  pointer-events: none;
+}
+body.dark-mode :deep(.event-marker) {
+  background-color: #ff9a9a;
 }
 </style>

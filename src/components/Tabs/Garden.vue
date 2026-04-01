@@ -148,7 +148,6 @@ const handlePlaylistItemClick = (index: number, src: string): void => {
 };
 
 onMounted(() => {
-  generatePlant();
   if (audioStore.playlist.length === 0) {
     audioStore.initTimePeriod();
 

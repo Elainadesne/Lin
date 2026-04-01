@@ -36,30 +36,41 @@ export const useChatStore = defineStore('chatStore', () => {
   });
 
   const parseStatusString = (rawStr: string): Partial<DossierState> | null => {
-    const statusMatch = /<状态栏>([\s\S]*?)<\/状态栏>/.exec(rawStr);
-    if (!statusMatch) return null;
+    const startIdx = rawStr.indexOf('<状态栏>');
+    if (startIdx === -1) return null;
 
-    const statusContent = statusMatch[1];
-    const extract = (key: string): string => {
-      const regex = new RegExp(`${key}【([\\s\\S]*?)】`);
-      const match = regex.exec(statusContent);
-      return match ? match[1].trim() : '';
-    };
+    const contentStart = startIdx + 5;
+    const endIdx = rawStr.indexOf('</状态栏>', contentStart);
 
-    return {
-      病历状态: extract('病历状态'),
-      本次记录: extract('本次记录'),
-      上次互动: extract('上次互动'),
-      当前关系: extract('当前关系'),
-      特殊性: extract('特殊性'),
-      优势资源: extract('优势资源'),
-      注意事项: extract('注意事项'),
-      问题成因: extract('问题成因'),
-      影响评估: extract('影响评估'),
-      干预方案: extract('干预方案'),
-      执行事项: extract('执行事项'),
-      预期目标: extract('预期目标'),
-    };
+    const statusContent =
+      endIdx === -1 ? rawStr.slice(contentStart) : rawStr.slice(contentStart, endIdx);
+
+    const result: Partial<DossierState> = {};
+    let cursor = 0;
+
+    while (cursor < statusContent.length) {
+      const openIdx = statusContent.indexOf('【', cursor);
+      if (openIdx === -1) break;
+
+      const rawKeyStr = statusContent.slice(cursor, openIdx).trim();
+      const keyParts = rawKeyStr.split(/\s+/);
+      const key = keyParts[keyParts.length - 1] as keyof DossierState;
+
+      const closeIdx = statusContent.indexOf('】', openIdx + 1);
+
+      const value =
+        closeIdx === -1
+          ? statusContent.slice(openIdx + 1).trim()
+          : statusContent.slice(openIdx + 1, closeIdx).trim();
+
+      cursor = closeIdx === -1 ? statusContent.length : closeIdx + 1;
+
+      if (key && key in dossier.value) {
+        result[key] = value;
+      }
+    }
+
+    return Object.keys(result).length > 0 ? result : null;
   };
 
   const handleHostMessage = (event: AppMessageEvent): void => {

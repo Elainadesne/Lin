@@ -157,29 +157,3 @@ onMounted(() => {
   });
 });
 </script>
-
-<style>
-.app-container {
-  position: relative;
-  transform: translateY(120vh) rotateX(15deg) scale(0.9);
-  opacity: 0;
-  transition: all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
-  will-change: transform, opacity, width, height;
-  margin: auto;
-}
-
-.app-container.app-ready {
-  transform: translateY(0) rotateX(0) scale(1);
-  opacity: 1;
-}
-
-.app-container.fullscreen-mode {
-  transform: none;
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.page {
-  border-radius: 0 18px 18px 0;
-  background-color: var(--notebook-bg);
-}
-</style>

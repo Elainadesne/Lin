@@ -36,7 +36,10 @@
   --ui-base-size: 15px;
   --base-font-size: var(--ui-base-size);
 }
-
+html {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
 body.dark-mode {
   --bg-color: #1c1a18;
   --notebook-bg: #6b645c;
