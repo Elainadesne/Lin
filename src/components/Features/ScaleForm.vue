@@ -17,7 +17,7 @@
       <h1 class="scale-title">{{ scaleData.title }}</h1>
       <div class="scale-desc"><strong>填写指引：</strong> {{ scaleData.desc }}</div>
 
-      <div ref="formScrollRef" class="scale-questions-container" style="overflow-y: auto">
+      <div ref="formScrollRef" class="scale-questions-container">
         <div
           :style="{
             height: `${rowVirtualizer.getTotalSize()}px`,
@@ -30,7 +30,10 @@
             :key="virtualRow.index"
             :ref="(el) => rowVirtualizer.measureElement(el as HTMLElement | null)"
             class="scale-q"
-            :class="{ answered: answers[virtualRow.index] !== undefined }"
+            :class="{
+              answered: virtualRow.index in answers,
+              'highlight-flash': highlightedIndex === virtualRow.index,
+            }"
             :style="{
               position: 'absolute',
               top: 0,
@@ -70,10 +73,13 @@
       <button
         class="notebook-btn submit-btn"
         :class="{ incomplete: !isAllAnswered }"
-        :disabled="!isAllAnswered"
-        @click="handleSubmit"
+        @click="handleBottomButtonClick"
       >
-        {{ isAllAnswered ? '完成评估，同步给林医生' : `还有 ${unansweredCount} 道题未完成...` }}
+        {{
+          isAllAnswered
+            ? '完成评估，同步给林医生'
+            : `还有 ${unansweredCount} 道题未完成... 点击定位`
+        }}
       </button>
     </template>
   </div>
@@ -157,6 +163,29 @@ const totalQuestions = computed(() => scaleData.value?.questions.length ?? 0);
 const answeredCount = computed(() => Object.keys(answers.value).length);
 const unansweredCount = computed(() => totalQuestions.value - answeredCount.value);
 const isAllAnswered = computed(() => totalQuestions.value > 0 && unansweredCount.value === 0);
+
+const highlightedIndex = ref<number | null>(null);
+let highlightTimeout: ReturnType<typeof setTimeout> | null = null;
+
+const handleBottomButtonClick = (): void => {
+  if (isAllAnswered.value) {
+    handleSubmit();
+  } else {
+    const targetIdx = scaleData.value?.questions.findIndex((_, i) => !(i in answers.value)) ?? -1;
+    if (targetIdx !== -1) {
+      rowVirtualizer.value.scrollToIndex(targetIdx, { align: 'center', behavior: 'smooth' });
+      if (highlightTimeout) clearTimeout(highlightTimeout);
+      highlightedIndex.value = null;
+
+      setTimeout(() => {
+        highlightedIndex.value = targetIdx;
+        highlightTimeout = setTimeout(() => {
+          highlightedIndex.value = null;
+        }, 1500);
+      }, 50);
+    }
+  }
+};
 
 const generateCircleStyle = (qIndex: number): void => {
   const rot = (Math.random() * 16 - 8).toFixed(1);
@@ -257,8 +286,63 @@ const handleAnimationEnd = (e: AnimationEvent): void => {
 </script>
 
 <style scoped>
+.scale-notebook {
+  display: flex;
+  flex-direction: column;
+  max-height: 100%;
+  overflow: hidden !important;
+}
+
 .scale-notebook.is-closing {
   animation: handBackToTop 1s ease-in-out forwards;
   pointer-events: none;
+}
+
+.scale-questions-container {
+  flex: 1;
+  margin-bottom: 15px;
+  padding-right: 5px;
+  height: 0;
+  overflow-y: auto;
+}
+
+.scale-questions-container::-webkit-scrollbar {
+  width: 6px;
+}
+.scale-questions-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scale-questions-container::-webkit-scrollbar-thumb {
+  border-radius: 10px;
+  background-color: var(--tab-3, #ccc);
+}
+body.dark-mode .scale-questions-container::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+@keyframes flashHighlight {
+  0% {
+    background-color: transparent;
+  }
+  20% {
+    background-color: var(--flash-bg, rgba(46, 204, 113, 0.3));
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.highlight-flash {
+  --flash-bg: rgba(46, 204, 113, 0.3);
+  animation: flashHighlight 1.5s ease-out forwards;
+  border-radius: 8px;
+}
+
+body.dark-mode .highlight-flash {
+  --flash-bg: rgba(46, 204, 113, 0.2);
+}
+
+.submit-btn.incomplete {
+  cursor: pointer;
 }
 </style>
