@@ -134,7 +134,9 @@ watch(
 );
 
 watch(inputText, (newVal) => {
-  chatStore.syncInputToHost(newVal);
+  if (newVal !== chatStore.syncedInputText) {
+    chatStore.syncInputToHost(newVal);
+  }
 });
 
 const adjustInputHeight = (): void => {
@@ -153,9 +155,7 @@ const handleSend = (): void => {
   if (!inputText.value.trim()) return;
 
   chatStore.sendMessageToHost(inputText.value.trim());
-  inputText.value = '';
   void nextTick(() => {
-    adjustInputHeight();
     void scrollToLatest();
   });
 };
