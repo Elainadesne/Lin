@@ -1,6 +1,12 @@
 <template>
   <div class="garden-frame">
     <div class="garden-svg-container" v-html="generatedSvg"></div>
+
+    <template v-if="isDouble12">
+      <canvas ref="beastCanvasRef" class="beast-canvas"></canvas>
+      <div class="beast-title">飞禽走兽</div>
+    </template>
+
     <div class="garden-label">{{ gardenLabel }}</div>
   </div>
 
@@ -86,7 +92,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, onBeforeUnmount, ref, watch } from 'vue';
 
 import { usePlantEngine } from '../../composables/usePlantEngine';
 import { useAppStore } from '../../stores/useAppStore';
@@ -97,6 +103,144 @@ const audioStore = useAudioStore();
 const { generatedSvg, gardenLabel, generatePlant } = usePlantEngine();
 
 const progressBarRef = ref<HTMLElement | null>(null);
+
+const today = new Date();
+const isDouble12 = today.getMonth() === 11 && today.getDate() === 12;
+const beastCanvasRef = ref<HTMLCanvasElement | null>(null);
+let animFrameId = 0;
+
+const initBeastAnimation = (): void => {
+  const canvas = beastCanvasRef.value;
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  const rect = canvas.parentElement?.getBoundingClientRect() ?? { width: 300, height: 400 };
+  canvas.width = rect.width;
+  canvas.height = rect.height;
+
+  const cw = canvas.width;
+  const ch = canvas.height;
+
+  class Bird {
+    x = Math.random() * cw;
+    y = 20 + Math.random() * (ch * 0.4);
+    scale = 0.3 + Math.random() * 0.3;
+    speed = 0.8 + Math.random() * 1.2;
+    flapSpeed = 8 + Math.random() * 4;
+    phase = Math.random() * Math.PI * 2;
+
+    update(): void {
+      this.x -= this.speed;
+      if (this.x < -50) {
+        this.x = cw + 50;
+        this.y = 20 + Math.random() * (ch * 0.4);
+      }
+    }
+    draw(ctx: CanvasRenderingContext2D, time: number): void {
+      let flap = Math.sin(time * this.flapSpeed + this.phase);
+      let yBob = this.y + Math.cos(time * this.flapSpeed + this.phase) * 3 * this.scale;
+      ctx.save();
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+      ctx.beginPath();
+      ctx.ellipse(this.x, yBob, 8 * this.scale, 2.5 * this.scale, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(this.x, yBob);
+      ctx.quadraticCurveTo(
+        this.x + 3 * this.scale,
+        yBob - 15 * flap * this.scale,
+        this.x + 10 * this.scale,
+        yBob - 12 * flap * this.scale,
+      );
+      ctx.quadraticCurveTo(
+        this.x + 3 * this.scale,
+        yBob + 2 * this.scale,
+        this.x + 4 * this.scale,
+        yBob,
+      );
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  class Beast {
+    x: number;
+    baseScale: number;
+    speed: number;
+    runSpeed = 12;
+    y = 0;
+    constructor(xOffset: number) {
+      this.x = xOffset;
+      this.baseScale = 0.3 + Math.random() * 0.2;
+      this.speed = 1.2 + Math.random() * 1;
+    }
+    update(time: number): void {
+      this.x += this.speed;
+      if (this.x > cw + 100) this.x = -100;
+      this.y = ch - 30 - 20 * this.baseScale + Math.sin(this.x * 0.05 + time * 3) * 5;
+    }
+    draw(ctx: CanvasRenderingContext2D, time: number): void {
+      let t = time * this.runSpeed;
+      let cx = this.x + 10 * this.baseScale;
+      let cy = this.y + Math.sin(t) * 3 * this.baseScale;
+      let px = this.x - 10 * this.baseScale;
+      let py = this.y + Math.sin(t - 1) * 3 * this.baseScale;
+
+      ctx.save();
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      const drawLeg = (ox: number, oy: number, phase: number, color: string): void => {
+        let angle = Math.PI / 2 + Math.sin(t + phase) * 0.6;
+        let length = 12 * this.baseScale;
+        ctx.strokeStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(ox, oy);
+        ctx.lineTo(ox + Math.cos(angle) * length, oy + Math.sin(angle) * length);
+        ctx.stroke();
+      };
+
+      ctx.lineWidth = 4 * this.baseScale;
+      drawLeg(px, py, Math.PI, 'rgba(0,0,0,0.3)');
+      drawLeg(cx, cy, Math.PI + 1, 'rgba(0,0,0,0.3)');
+
+      ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+      ctx.lineWidth = 10 * this.baseScale;
+      ctx.beginPath();
+      ctx.moveTo(px, py);
+      ctx.lineTo(cx, cy);
+      ctx.stroke();
+
+      ctx.lineWidth = 4 * this.baseScale;
+      drawLeg(px, py, 0, 'rgba(0,0,0,0.5)');
+      drawLeg(cx, cy, 1, 'rgba(0,0,0,0.5)');
+
+      ctx.restore();
+    }
+  }
+
+  const birds = Array.from({ length: 7 }, () => new Bird());
+  const beasts = Array.from({ length: 3 }, (_, i) => new Beast(-100 - i * 120));
+
+  const animate = (): void => {
+    const time = performance.now() / 1000;
+    ctx.clearRect(0, 0, cw, ch);
+
+    beasts.forEach((b) => {
+      b.update(time);
+      b.draw(ctx, time);
+    });
+    birds.forEach((b) => {
+      b.update();
+      b.draw(ctx, time);
+    });
+
+    animFrameId = requestAnimationFrame(animate);
+  };
+
+  animate();
+};
 
 const formatTime = (secs: number): string => {
   if (isNaN(secs) || secs < 0) return '00:00';
@@ -148,6 +292,12 @@ const handlePlaylistItemClick = (index: number, src: string): void => {
 };
 
 onMounted(() => {
+  if (isDouble12) {
+    void nextTick(() => {
+      initBeastAnimation();
+    });
+  }
+
   if (audioStore.playlist.length === 0) {
     audioStore.initTimePeriod();
 
@@ -176,9 +326,14 @@ onMounted(() => {
       document.removeEventListener(evt, unlockAudio);
     });
   };
+
   ['click', 'touchstart', 'keydown'].forEach((evt) => {
     document.addEventListener(evt, unlockAudio);
   });
+});
+
+onBeforeUnmount(() => {
+  if (animFrameId) cancelAnimationFrame(animFrameId);
 });
 
 watch(
@@ -192,6 +347,50 @@ watch(
 </script>
 
 <style scoped>
+.garden-frame {
+  position: relative; /* 确保Canvas可绝对定位在画框内 */
+}
+
+/* 飞禽走兽彩蛋样式 */
+.beast-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 5;
+  width: 100%;
+  height: 100%;
+  pointer-events: none; /* 穿透点击，不影响音乐及其他操作 */
+}
+
+.beast-title {
+  position: absolute;
+  top: 20%;
+  z-index: 6;
+  animation: beastBreath 4s infinite alternate ease-in-out;
+  padding-left: 12px; /* 修正字间距带来的居中视觉偏移 */
+  width: 100%;
+  pointer-events: none;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: bold;
+  font-size: 24px;
+  font-family: 'KaiTi', 'STKaiti', serif;
+  letter-spacing: 12px;
+  text-align: center;
+  text-shadow:
+    0 0 10px rgba(255, 255, 255, 0.6),
+    0 0 20px rgba(255, 215, 0, 0.6);
+}
+
+@keyframes beastBreath {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+}
 :deep(.p-album-art.morning) {
   --player-theme: #4bb5a3;
   --player-bg-active: rgba(75, 181, 163, 0.15);
