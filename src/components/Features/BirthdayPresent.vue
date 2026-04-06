@@ -58,8 +58,15 @@
       </TresCanvas>
     </div>
 
-    <div class="interact-hint" :style="{ opacity: opened || opening ? 0 : 1 }">
-      生日快乐！点击拆开礼物 🎁
+    <div class="interact-hint" :style="{ opacity: opened || opening ? 0 : 1 }">点击拆开礼物 🎁</div>
+
+    <div class="bday-card-ui" :class="{ 'is-visible': opened && presentOpacity === 1 }">
+      <div class="bday-card-inner">
+        <h3 class="bday-card-title">✉️ 生日快乐</h3>
+        <p class="bday-card-text">
+          {{ chatStore.birthdayCardContent || '愿你每一天都充满阳光与温暖。' }}
+        </p>
+      </div>
     </div>
 
     <button v-if="opened && presentOpacity === 1" class="close-btn" @click="closeComponent">
@@ -72,10 +79,12 @@
 import { useLoop } from '@tresjs/core';
 import { onMounted, onUnmounted, ref } from 'vue';
 
+import { useAudioStore } from '../../stores/useAudioStore';
 import { useChatStore } from '../../stores/useChatStore';
 
 const emit = defineEmits<(e: 'close') => void>();
 const chatStore = useChatStore();
+const audioStore = useAudioStore();
 
 const S = 8,
   HS = S / 2,
@@ -182,7 +191,6 @@ onBeforeRender(() => {
     if (openTime.value >= 100) {
       opening.value = false;
       opened.value = true;
-      chatStore.addTempPromptToHost('系统提示：来访者拆开了你准备的生日礼物。');
     }
   } else if (opened.value) {
     if (presentOpacity.value > 0) {
@@ -451,6 +459,8 @@ const stopConfetti = (): void => {
 };
 
 onMounted(() => {
+  audioStore.triggerBirthdayMode();
+
   if (!confettiRef.value) return;
   const context = confettiRef.value.getContext('2d');
   if (!context) return;
@@ -481,8 +491,6 @@ onMounted(() => {
     if (!isConfettiStopping) rafId = requestAnimationFrame(animate);
   };
   animate();
-
-  chatStore.addTempPromptToHost('系统提示：来访者收到了你准备的生日礼物！');
 });
 
 onUnmounted(() => {
@@ -561,5 +569,53 @@ onUnmounted(() => {
 }
 .close-btn:active {
   transform: translateY(1px);
+}
+
+.bday-card-ui {
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.9);
+  opacity: 0;
+  z-index: 20;
+  transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  width: 80%;
+  max-width: 340px;
+  pointer-events: none;
+}
+
+.bday-card-ui.is-visible {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.bday-card-inner {
+  backdrop-filter: blur(10px);
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.15),
+    0 0 0 4px rgba(255, 77, 121, 0.2);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 24px;
+  color: #333;
+  text-align: center;
+}
+
+.bday-card-title {
+  margin: 0 0 16px 0;
+  color: #ff4d79;
+  font-weight: 800;
+  font-size: 1.2rem;
+  letter-spacing: 2px;
+}
+
+.bday-card-text {
+  margin: 0;
+  color: #555;
+  font-size: 1rem;
+  line-height: 1.6;
+  text-align: left;
+  white-space: pre-wrap;
 }
 </style>

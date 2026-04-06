@@ -27,6 +27,10 @@ export const useChatStore = defineStore('chatStore', () => {
 
   const streamText = ref('');
 
+  const isBirthdayToday = ref(false);
+  const hasRequestedCard = ref(false);
+  const birthdayCardContent = ref('');
+
   const availableDates = computed(() => {
     const dates = new Set<string>();
     messages.value.forEach((msg) => {
@@ -75,6 +79,15 @@ export const useChatStore = defineStore('chatStore', () => {
 
   const handleHostMessage = (event: AppMessageEvent): void => {
     const { type, text, state, messages: incomingMsgs } = event.data;
+    const card = (event.data as Record<string, unknown>).card as string | undefined;
+
+    if ((type as string) === 'NOTIFY_BIRTHDAY_TODAY') {
+      isBirthdayToday.value = true;
+    }
+
+    if ((type as string) === 'TRIGGER_BIRTHDAY' && card) {
+      birthdayCardContent.value = card;
+    }
 
     if (type === 'GEN_STATE') {
       isGenerating.value = Boolean(state);
@@ -147,6 +160,14 @@ export const useChatStore = defineStore('chatStore', () => {
   const sendMessageToHost = (text: string): void => {
     if (!text.trim() || isGenerating.value) return;
 
+    if (isBirthdayToday.value && !hasRequestedCard.value) {
+      addTempPromptToHost(
+        '系统提示：今天是来访者的生日。请在本次回复的最末尾，为TA专门写一段走心的生日贺卡，并严格使用以下格式包裹（不要加额外标点）：\n[生日贺卡：这里是具体的贺卡内容]',
+        { name: 'lin_bday_card' },
+      );
+      hasRequestedCard.value = true;
+    }
+
     messages.value.push({
       id: `msg_temp_${Date.now()}`,
       role: 'user',
@@ -192,6 +213,9 @@ export const useChatStore = defineStore('chatStore', () => {
     isGenerating,
     syncedInputText,
     streamText,
+    isBirthdayToday,
+    hasRequestedCard,
+    birthdayCardContent,
     handleHostMessage,
     sendMessageToHost,
     stopGeneration,
