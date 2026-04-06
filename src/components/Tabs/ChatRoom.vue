@@ -117,7 +117,13 @@
       </div>
     </div>
 
-    <div id="chat-input-wrapper" class="input-wrapper">
+    <div
+      id="chat-input-wrapper"
+      class="input-wrapper"
+      :class="{
+        'is-pending-item': messageSync.pendingTarot.value || messageSync.pendingScaleId.value,
+      }"
+    >
       <div style="position: relative; width: 38px; height: 38px">
         <button
           class="glass-btn"
@@ -169,10 +175,12 @@ import { computed, inject, nextTick, onMounted, ref, watch } from 'vue';
 import FlatPickr from 'vue-flatpickr-component';
 
 import { useMarkdown } from '../../composables/useMarkdown';
+import { useMessageSync } from '../../composables/useMessageSync';
 import { useChatStore } from '../../stores/useChatStore';
 import { useEnvStore } from '../../stores/useEnvStore';
 
 const chatStore = useChatStore();
+const messageSync = useMessageSync();
 const { renderMarkdown, renderTypingHtml } = useMarkdown();
 
 const toggleFullscreen = inject<() => void>('toggleFullscreen', () => {
@@ -213,6 +221,19 @@ const handleSend = (): void => {
   }
   if (!inputText.value.trim()) return;
 
+  if (messageSync.pendingTarot.value || messageSync.pendingScaleId.value) {
+    let skipMsg = '';
+    if (messageSync.pendingTarot.value)
+      skipMsg = '系统提示：来访者没有理会桌上的塔罗牌，直接继续了对话。';
+    if (messageSync.pendingScaleId.value)
+      skipMsg = '系统提示：来访者没有理会递过来的量表，直接继续了对话。';
+
+    chatStore.addTempPromptToHost(skipMsg);
+
+    messageSync.pendingTarot.value = false;
+    messageSync.pendingScaleId.value = null;
+  }
+
   chatStore.sendMessageToHost(inputText.value.trim());
   void nextTick(() => {
     void scrollToLatest();
@@ -226,6 +247,20 @@ const listData = computed(() => chatStore.messages);
 
 const scrollState = ref({ scrollTop: 0, clientHeight: 0, scrollHeight: 0 });
 
+const checkPendingTrigger = (): void => {
+  const { scrollTop, clientHeight, scrollHeight } = scrollState.value;
+  if (scrollHeight > 0 && scrollTop + clientHeight >= scrollHeight - 50) {
+    if (messageSync.pendingTarot.value) {
+      messageSync.pendingTarot.value = false;
+      messageSync.triggerTarot.value = true;
+    }
+    if (messageSync.pendingScaleId.value) {
+      messageSync.activeScaleId.value = messageSync.pendingScaleId.value;
+      messageSync.pendingScaleId.value = null;
+    }
+  }
+};
+
 const updateScrollState = (): void => {
   if (scrollContainerRef.value) {
     scrollState.value = {
@@ -233,8 +268,22 @@ const updateScrollState = (): void => {
       clientHeight: scrollContainerRef.value.clientHeight,
       scrollHeight: scrollContainerRef.value.scrollHeight,
     };
+    checkPendingTrigger();
   }
 };
+
+watch(
+  () => messageSync.pendingTarot.value,
+  (val) => {
+    if (val) void nextTick(checkPendingTrigger);
+  },
+);
+watch(
+  () => messageSync.pendingScaleId.value,
+  (val) => {
+    if (val) void nextTick(checkPendingTrigger);
+  },
+);
 
 const rowVirtualizer = useVirtualizer(
   computed(() => ({
@@ -409,13 +458,21 @@ const scrollToLatest = async (): Promise<void> => {
 watch(
   [(): number => chatStore.messages.length, (): string => chatStore.streamText],
   async (): Promise<void> => {
-    if (!isViewingHistory.value) {
-      await nextTick();
+    if (isViewingHistory.value) return;
+
+    const container = scrollContainerRef.value;
+    let isNearBottom = true;
+    if (container) {
+      isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 150;
+    }
+
+    await nextTick();
+
+    if (isNearBottom && container) {
       if (chatStore.messages.length > 0) {
         rowVirtualizer.value.scrollToIndex(chatStore.messages.length - 1, { align: 'end' });
       }
-      const container = scrollContainerRef.value;
-      if (container) container.scrollTop = container.scrollHeight;
+      container.scrollTop = container.scrollHeight;
       const timeline = timelineContainerRef.value;
       if (timeline) timeline.scrollTop = timeline.scrollHeight;
     }
@@ -706,7 +763,53 @@ body.dark-mode .prompt-scrollbar-dot.ai {
   box-shadow: 0 0 0 2px rgba(46, 204, 113, 0.4) !important;
   background-color: #2ecc71 !important;
 }
+.input-wrapper.is-pending-item {
+  animation: pendingPulseLight 2s infinite alternate ease-in-out;
+  box-shadow:
+    0 0 15px rgba(163, 217, 177, 0.6),
+    inset 0 1px 2px rgba(255, 255, 255, 0.8);
+  border-color: var(--tab-3);
+}
+.input-wrapper.is-pending-item textarea {
+  color: #2a5a3b;
+}
+.input-wrapper.is-pending-item textarea::placeholder {
+  color: #7b9c87;
+}
 
+body.dark-mode .input-wrapper.is-pending-item {
+  animation: pendingPulseDark 2s infinite alternate ease-in-out;
+  box-shadow: 0 0 15px rgba(163, 217, 177, 0.3);
+}
+body.dark-mode .input-wrapper.is-pending-item textarea {
+  color: #a3d9b1;
+}
+
+@keyframes pendingPulseLight {
+  0% {
+    transform: scale(1);
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.65);
+  }
+  100% {
+    transform: scale(1.02) translateY(-2px);
+    border-radius: 12px;
+    background: rgba(230, 250, 235, 0.95);
+  }
+}
+
+@keyframes pendingPulseDark {
+  0% {
+    transform: scale(1);
+    border-radius: 20px;
+    background: rgba(0, 0, 0, 0.3);
+  }
+  100% {
+    transform: scale(1.02) translateY(-2px);
+    border-radius: 12px;
+    background: rgba(30, 50, 40, 0.8);
+  }
+}
 .timeline-tooltip {
   display: -webkit-box;
   position: absolute;

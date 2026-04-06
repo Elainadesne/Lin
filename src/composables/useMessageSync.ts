@@ -7,11 +7,16 @@ const triggerTarot = ref(false);
 const activeScaleId = ref<string | null>(null);
 const isDevTest = ref(false);
 
+const pendingTarot = ref(false);
+const pendingScaleId = ref<string | null>(null);
+
 export function useMessageSync(): {
   triggerBirthday: Ref<boolean>;
   triggerTarot: Ref<boolean>;
   activeScaleId: Ref<string | null>;
   isDevTest: Ref<boolean>;
+  pendingTarot: Ref<boolean>;
+  pendingScaleId: Ref<string | null>;
   resetTrigger: (type: 'birthday' | 'tarot' | 'scale') => void;
 } {
   const chatStore = useChatStore();
@@ -33,6 +38,16 @@ export function useMessageSync(): {
     if (data.type === 'TRIGGER_SCALE') {
       isDevTest.value = false;
       activeScaleId.value = data.scale ?? null;
+      return;
+    }
+    if (data.type === 'PENDING_TAROT') {
+      isDevTest.value = false;
+      pendingTarot.value = true;
+      return;
+    }
+    if (data.type === 'PENDING_SCALE') {
+      isDevTest.value = false;
+      pendingScaleId.value = data.scale ?? null;
       return;
     }
 
@@ -58,6 +73,8 @@ export function useMessageSync(): {
     triggerTarot,
     activeScaleId,
     isDevTest,
+    pendingTarot,
+    pendingScaleId,
     resetTrigger,
   };
 }
