@@ -29,6 +29,7 @@
             v-for="virtualRow in rowVirtualizer.getVirtualItems()"
             :key="virtualRow.index"
             :ref="(el) => rowVirtualizer.measureElement(el as HTMLElement | null)"
+            :data-index="virtualRow.index"
             class="scale-q"
             :class="{
               answered: virtualRow.index in answers,

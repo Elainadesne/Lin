@@ -7,6 +7,7 @@
       <div class="dev-row">
         <button class="dev-btn" @click="testTarot">卡牌渲染</button>
         <button class="dev-btn" @click="testScale">表单渲染</button>
+        <button class="dev-btn" @click="testBirthday">生日事件</button>
       </div>
     </div>
 
@@ -91,9 +92,12 @@ import { computed, nextTick, ref } from 'vue';
 import { useMarkdown } from '../../composables/useMarkdown';
 import { useMessageSync } from '../../composables/useMessageSync';
 import { PLANT_CONFIG, usePlantEngine } from '../../composables/usePlantEngine';
+import { useChatStore } from '../../stores/useChatStore';
+import type { AppMessageEvent } from '../../types';
 
 const messageSync = useMessageSync();
 const plantEngine = usePlantEngine();
+const chatStore = useChatStore();
 const { renderMarkdown, renderTypingHtml } = useMarkdown();
 
 const testTarot = (): void => {
@@ -104,6 +108,24 @@ const testTarot = (): void => {
 const testScale = (): void => {
   messageSync.isDevTest.value = true;
   messageSync.activeScaleId.value = 'dev';
+};
+
+const testBirthday = (): void => {
+  messageSync.isDevTest.value = true;
+
+  const notifyEvent = { data: { type: 'NOTIFY_BIRTHDAY_TODAY' } };
+  const triggerEvent = {
+    data: {
+      type: 'TRIGGER_BIRTHDAY',
+      card: '🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂🎂',
+    },
+  };
+
+  chatStore.handleHostMessage(notifyEvent as unknown as AppMessageEvent);
+  chatStore.handleHostMessage(triggerEvent as unknown as AppMessageEvent);
+
+  window.postMessage(notifyEvent.data, '*');
+  window.postMessage(triggerEvent.data, '*');
 };
 
 const selectedMonth = ref(0);

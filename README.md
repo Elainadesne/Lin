@@ -57,6 +57,7 @@ pnpm dev
 - **动画与视觉特效:**
   - **彩带动画:** 灵感来自 CodePen 上的 [iprodev](https://codepen.io/iprodev/pen/azpWBr)。（采用 [MIT](public/licenses/manual/MIT-iprodev.txt) 协议）
   - **礼盒动画:** 灵感来自 CodePen 上的 [jkantner](https://codepen.io/jkantner/pen/oNgwLLz)。（采用 [MIT](public/licenses/manual/MIT-jkantner.txt) 协议）
+  - **信封动画:** 灵感来自 CodePen 上的 [peiche](https://codepen.io/peiche/pen/naYmMb)。（采用 [MIT](public/licenses/manual/MIT-peiche.txt) 协议）
 - **技术栈:**
   - [![Vue.js](https://img.shields.io/badge/Vue.js-4FC08D?logo=vuedotjs&logoColor=white)](https://vuejs.org/) - 前端框架。(采用 [MIT](public/licenses/npm/MIT-vue.txt) 协议)
   - [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/) - 编程语言。(采用 [Apache-2.0](public/licenses/npm/Apache-2.0-typescript.txt) 协议)

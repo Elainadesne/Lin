@@ -1,3 +1,4 @@
+import Tres from '@tresjs/core';
 import { createPinia } from 'pinia';
 import { createApp, type Component } from 'vue';
 
@@ -22,4 +23,5 @@ const app = createApp(App as Component);
 const pinia = createPinia();
 
 app.use(pinia);
+app.use(Tres);
 app.mount('#app');

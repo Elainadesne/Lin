@@ -6,22 +6,35 @@
   >
     <canvas ref="confettiRef" class="confetti-canvas"></canvas>
 
-    <div class="tres-wrapper">
-      <TresCanvas clear-color="transparent" alpha>
-        <TresPerspectiveCamera :position="[22, 22, 22]" :look-at="[0, 0, 0]" />
-        <TresAmbientLight :intensity="0.8" color="#ffffff" />
+    <div class="tres-wrapper" :class="{ 'is-visible': showGift, 'is-kept': isKeeping }">
+      <TresCanvas clear-color="#000000" :clear-alpha="0" alpha>
+        <TresPerspectiveCamera :position="[18, 18, 18]" :look-at="[0, 0, 0]" />
+        <TresAmbientLight :intensity="1.2" color="#ffffff" />
         <TresDirectionalLight
-          :position="[10, 20, 0]"
-          :intensity="0.5"
-          color="#ffffff"
+          :position="[10, 20, 10]"
+          :intensity="1.5"
+          color="#fff0f5"
           cast-shadow
+        />
+        <TresPointLight
+          :position="[0, 0, 0]"
+          :intensity="opened ? 8 : 0.5"
+          color="#ff4d79"
+          :distance="80"
         />
 
         <TresGroup
-          :scale="[groupScale[0], groupScale[1], groupScale[2]]"
+          :scale="[
+            groupScale[0] * hoverScale,
+            groupScale[1] * hoverScale,
+            groupScale[2] * hoverScale,
+          ]"
           :rotation="[groupRotation[0], groupRotation[1], groupRotation[2]]"
+          :position="[groupPosition[0], groupPosition[1], groupPosition[2]]"
           @click="handleInteract"
           @touchstart.prevent="handleInteract"
+          @pointer-enter="onPointerEnter"
+          @pointer-leave="onPointerLeave"
         >
           <TresGroup
             v-for="(side, sIdx) in sides"
@@ -34,14 +47,17 @@
               :key="piece.id"
               :position="[piece.pos[0], piece.pos[1], piece.pos[2]]"
               :rotation="[piece.rot[0], piece.rot[1], piece.rot[2]]"
+              cast-shadow
               receive-shadow
             >
               <TresPlaneGeometry :args="[fracS, fracS]" />
-              <TresMeshStandardMaterial
-                :color="piece.isM ? '#ff4d79' : '#ffe6e6'"
+              <TresMeshPhysicalMaterial
+                :color="piece.isM ? '#ff1a53' : '#fff0f5'"
                 :side="2"
-                transparent
-                :opacity="presentOpacity"
+                :metalness="piece.isM ? 0.4 : 0.1"
+                :roughness="piece.isM ? 0.2 : 0.4"
+                :clearcoat="1.0"
+                :clearcoat-roughness="0.1"
               />
             </TresMesh>
           </TresGroup>
@@ -51,33 +67,112 @@
             :rotation="[bow.rot[0], bow.rot[1], bow.rot[2]]"
             cast-shadow
           >
-            <TresDodecahedronGeometry :args="[2]" />
-            <TresMeshStandardMaterial color="#ff4d79" transparent :opacity="presentOpacity" />
+            <TresDodecahedronGeometry :args="[1.5]" />
+            <TresMeshPhysicalMaterial
+              color="#ff1a53"
+              :metalness="0.5"
+              :roughness="0.15"
+              :clearcoat="1.0"
+              :clearcoat-roughness="0.1"
+            />
           </TresMesh>
         </TresGroup>
       </TresCanvas>
     </div>
 
-    <div class="interact-hint" :style="{ opacity: opened || opening ? 0 : 1 }">点击拆开礼物 🎁</div>
+    <div class="interact-hint" :class="{ 'is-hidden': opened || opening, 'is-visible': showHint }">
+      点击拆开礼物 🎁
+    </div>
 
-    <div class="bday-card-ui" :class="{ 'is-visible': opened && presentOpacity === 1 }">
-      <div class="bday-card-inner">
-        <h3 class="bday-card-title">✉️ 生日快乐</h3>
-        <p class="bday-card-text">
-          {{ chatStore.birthdayCardContent || '愿你每一天都充满阳光与温暖。' }}
-        </p>
+    <div
+      class="envelope-wrapper"
+      :class="{ 'is-visible': showEnvelope, 'is-open': openEnvelope, 'is-kept': isKeeping }"
+    >
+      <div class="envelope">
+        <div class="flap front"></div>
+        <div class="flap top"></div>
+        <div class="letter" :class="{ 'is-unfolded': isUnfolded }">
+          <div class="fold fold-top">
+            <div class="face front">
+              <div class="letter-content-wrapper">
+                <h3 class="letter-title">✉️ 生日快乐</h3>
+                <p class="letter-text">{{ pages[currentPage] }}</p>
+                <div v-if="pages.length > 1" class="pagination">
+                  <button :disabled="currentPage === 0" @click="prevPage">上页</button>
+                  <span>{{ currentPage + 1 }} / {{ pages.length }}</span>
+                  <button :disabled="currentPage === pages.length - 1" @click="nextPage">
+                    下页
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="face back"></div>
+          </div>
+
+          <div class="fold fold-middle">
+            <div class="face front">
+              <div class="letter-content-wrapper">
+                <h3 class="letter-title">✉️ 生日快乐</h3>
+                <p class="letter-text">{{ pages[currentPage] }}</p>
+                <div v-if="pages.length > 1" class="pagination">
+                  <button :disabled="currentPage === 0" @click="prevPage">上页</button>
+                  <span>{{ currentPage + 1 }} / {{ pages.length }}</span>
+                  <button :disabled="currentPage === pages.length - 1" @click="nextPage">
+                    下页
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="face back"></div>
+          </div>
+
+          <div class="fold fold-bottom">
+            <div class="face front">
+              <div class="letter-content-wrapper">
+                <h3 class="letter-title">✉️ 生日快乐</h3>
+                <p class="letter-text">{{ pages[currentPage] }}</p>
+                <div v-if="pages.length > 1" class="pagination">
+                  <button :disabled="currentPage === 0" @click="prevPage">上页</button>
+                  <span>{{ currentPage + 1 }} / {{ pages.length }}</span>
+                  <button :disabled="currentPage === pages.length - 1" @click="nextPage">
+                    下页
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="face back"></div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <button v-if="opened && presentOpacity === 1" class="close-btn" @click="closeComponent">
-      收起礼物
+    <div class="envelope-wrapper is-open shadow-measure">
+      <div class="envelope">
+        <div class="letter shadow-letter is-unfolded">
+          <div class="letter-content-wrapper">
+            <h3 class="letter-title">✉️ 生日快乐</h3>
+            <p ref="measureRef" class="letter-text"></p>
+            <div class="pagination">
+              <button>上页</button><span>1 / 1</span><button>下页</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button
+      v-if="showLetterText"
+      class="close-btn"
+      :class="{ 'is-kept': isKeeping }"
+      @click="closeComponent"
+    >
+      收下贺卡
     </button>
   </div>
 </template>
 
 <script setup lang="ts">
-import { useLoop } from '@tresjs/core';
-import { onMounted, onUnmounted, ref } from 'vue';
+import { onMounted, onUnmounted, ref, computed, nextTick, watch } from 'vue';
 
 import { useAudioStore } from '../../stores/useAudioStore';
 import { useChatStore } from '../../stores/useChatStore';
@@ -88,17 +183,87 @@ const audioStore = useAudioStore();
 
 const S = 8,
   HS = S / 2,
-  divs = 3;
+  divs = 6;
 const fracS = S / divs;
 const HD = divs / 2;
 
 const opening = ref(false);
 const opened = ref(false);
 const openTime = ref(0);
-const presentOpacity = ref(1);
-const groupScale = ref([1, 1, 1]);
+
+const groupScale = ref([0.5, 0.5, 0.5]);
 const groupRotation = ref([0, Math.PI / 4, 0]);
+const groupPosition = ref([0, 0, 0]);
 const isClosing = ref(false);
+
+const showGift = ref(false);
+const showHint = ref(false);
+const isHovered = ref(false);
+const hoverScale = ref(1);
+let hintTimeout: ReturnType<typeof setTimeout>;
+
+const showEnvelope = ref(false);
+const openEnvelope = ref(false);
+const isUnfolded = ref(false);
+const showLetterText = ref(false);
+const isKeeping = ref(false);
+
+const currentPage = ref(0);
+const pages = ref<string[]>([]);
+const measureRef = ref<HTMLElement | null>(null);
+
+const rawText = computed(
+  () =>
+    chatStore.birthdayCardContent ||
+    '愿你每一天都充满阳光与温暖。祝你生日快乐，心想事成，万事如意，笑口常开！',
+);
+
+const prevPage = (): void => {
+  if (currentPage.value > 0) currentPage.value--;
+};
+const nextPage = (): void => {
+  if (currentPage.value < pages.value.length - 1) currentPage.value++;
+};
+
+const calculatePagination = async (): Promise<void> => {
+  await nextTick();
+  if (!measureRef.value) return;
+  const el = measureRef.value;
+  const fullText = rawText.value;
+  const newPages: string[] = [];
+
+  let startIndex = 0;
+
+  while (startIndex < fullText.length) {
+    let endIndex = startIndex + 1;
+
+    while (endIndex <= fullText.length) {
+      el.textContent = fullText.substring(startIndex, endIndex);
+      if (el.scrollHeight > el.clientHeight) {
+        endIndex--;
+        break;
+      }
+      endIndex++;
+    }
+
+    if (endIndex > fullText.length) endIndex = fullText.length;
+    if (endIndex === startIndex) endIndex++;
+
+    newPages.push(fullText.substring(startIndex, endIndex));
+    startIndex = endIndex;
+  }
+
+  pages.value = newPages.length > 0 ? newPages : [fullText];
+  currentPage.value = 0;
+};
+
+watch(
+  rawText,
+  () => {
+    void calculatePagination();
+  },
+  { immediate: true },
+);
 
 const rand = (min: number, max: number): number => Math.random() * (max - min) + min;
 
@@ -117,16 +282,17 @@ interface Side {
   pieces: Piece[];
 }
 const sides = ref<Side[]>([]);
+
 const bow = ref({
   pos: [0, HS + 1, 0] as [number, number, number],
   firstPos: [0, HS + 1, 0] as [number, number, number],
   rot: [0, 0, 0] as [number, number, number],
   vel: [
-    rand(0.5, 1.5) * (Math.random() < 0.5 ? -1 : 1),
+    rand(0.2, 0.6) * (Math.random() < 0.5 ? -1 : 1),
     1.5,
-    rand(0.5, 1.5) * (Math.random() < 0.5 ? -1 : 1),
+    rand(0.2, 0.6) * (Math.random() < 0.5 ? -1 : 1),
   ] as [number, number, number],
-  rotSpeed: [rand(0.1, 0.2), rand(0.1, 0.2), rand(0.1, 0.2)] as [number, number, number],
+  rotSpeed: [rand(0.05, 0.1), rand(0.05, 0.1), rand(0.05, 0.1)] as [number, number, number],
 });
 
 for (let s = 0; s < 6; ++s) {
@@ -164,14 +330,14 @@ for (let s = 0; s < 6; ++s) {
         firstPos: [...pPos],
         rot: [0, 0, 0],
         vel: [
-          rand(0.5, 1.5) * (Math.random() < 0.5 ? -1 : 1),
-          rand(0.5, 1.5) * (Math.random() < 0.5 ? -1 : 1),
-          rand(0.5, 1.5) * (Math.random() < 0.5 ? -1 : 1),
+          rand(0.1, 0.4) * (Math.random() < 0.5 ? -1 : 1),
+          rand(0.1, 0.5),
+          rand(0.1, 0.4) * (Math.random() < 0.5 ? -1 : 1),
         ],
         rotSpeed: [
-          rand(0.05, 0.15) * (Math.random() < 0.5 ? -1 : 1),
-          rand(0.05, 0.15) * (Math.random() < 0.5 ? -1 : 1),
-          rand(0.05, 0.15) * (Math.random() < 0.5 ? -1 : 1),
+          rand(0.02, 0.08) * (Math.random() < 0.5 ? -1 : 1),
+          rand(0.02, 0.08) * (Math.random() < 0.5 ? -1 : 1),
+          rand(0.02, 0.08) * (Math.random() < 0.5 ? -1 : 1),
         ],
       });
     }
@@ -179,67 +345,83 @@ for (let s = 0; s < 6; ++s) {
   sides.value.push({ pos, rot, pieces });
 }
 
-const { onBeforeRender } = useLoop();
+let presentRafId: number;
 
-onBeforeRender(() => {
+const updatePresentAnimation = (): void => {
+  const targetHoverScale = isHovered.value && !opening.value && !opened.value ? 1.15 : 1;
+  hoverScale.value += (targetHoverScale - hoverScale.value) * 0.1;
+
   if (!opening.value && !opened.value) {
-    groupRotation.value[1] += 0.01;
+    groupRotation.value[1] += 0.005;
+    groupPosition.value[1] = Math.sin(Date.now() * 0.002) * 0.5;
+
+    if (isHovered.value) {
+      groupRotation.value[2] = Math.sin(Date.now() * 0.02) * 0.08;
+    } else {
+      groupRotation.value[2] *= 0.9;
+    }
   } else if (opening.value) {
-    const scaleBy = 1 - 0.05 * Math.sin((8 * Math.PI * openTime.value) / 100);
-    groupScale.value = [scaleBy, scaleBy, scaleBy];
-    openTime.value += 5;
+    groupPosition.value[0] = (Math.random() - 0.5) * 0.15;
+    groupPosition.value[2] = (Math.random() - 0.5) * 0.15;
+
+    openTime.value += 3;
     if (openTime.value >= 100) {
       opening.value = false;
       opened.value = true;
+
+      setTimeout(() => {
+        showEnvelope.value = true;
+      }, 600);
+      setTimeout(() => {
+        openEnvelope.value = true;
+      }, 2000);
+      setTimeout(() => {
+        isUnfolded.value = true;
+      }, 6000);
+      setTimeout(() => {
+        showLetterText.value = true;
+      }, 8800);
     }
   } else if (opened.value) {
-    if (presentOpacity.value > 0) {
-      presentOpacity.value = Math.max(0, presentOpacity.value - 0.03);
+    const gravity = 0.015;
 
-      sides.value.forEach((side) => {
-        side.pieces.forEach((p: Piece) => {
-          p.pos[0] += p.vel[0];
-          p.pos[1] += p.vel[1];
-          p.pos[2] += p.vel[2];
-          p.rot[0] += p.rotSpeed[0];
-          p.rot[1] += p.rotSpeed[1];
-          p.rot[2] += p.rotSpeed[2];
-        });
+    sides.value.forEach((side) => {
+      side.pieces.forEach((p: Piece) => {
+        p.vel[1] -= gravity;
+        p.pos[0] += p.vel[0];
+        p.pos[1] += p.vel[1];
+        p.pos[2] += p.vel[2];
+        p.rot[0] += p.rotSpeed[0];
+        p.rot[1] += p.rotSpeed[1];
+        p.rot[2] += p.rotSpeed[2];
       });
-      bow.value.pos[0] += bow.value.vel[0];
-      bow.value.pos[1] += bow.value.vel[1];
-      bow.value.pos[2] += bow.value.vel[2];
-      bow.value.rot[0] += bow.value.rotSpeed[0];
-      bow.value.rot[1] += bow.value.rotSpeed[1];
-      bow.value.rot[2] += bow.value.rotSpeed[2];
-    } else {
-      presentOpacity.value = 1;
-      opened.value = false;
-      openTime.value = 0;
-      groupScale.value = [1, 1, 1];
-
-      sides.value.forEach((side) => {
-        side.pieces.forEach((p: Piece) => {
-          p.pos = [...p.firstPos];
-          p.rot = [0, 0, 0];
-        });
-      });
-      bow.value.pos = [...bow.value.firstPos];
-      bow.value.rot = [0, 0, 0];
-    }
+    });
+    bow.value.vel[1] -= gravity;
+    bow.value.pos[0] += bow.value.vel[0];
+    bow.value.pos[1] += bow.value.vel[1];
+    bow.value.pos[2] += bow.value.vel[2];
+    bow.value.rot[0] += bow.value.rotSpeed[0];
+    bow.value.rot[1] += bow.value.rotSpeed[1];
+    bow.value.rot[2] += bow.value.rotSpeed[2];
   }
-});
+
+  presentRafId = requestAnimationFrame(updatePresentAnimation);
+};
 
 const handleInteract = (): void => {
+  if (!showGift.value) return;
   if (!opening.value && !opened.value) {
     opening.value = true;
-    stopConfetti();
+    showHint.value = false;
+    clearTimeout(hintTimeout);
   }
 };
 
-const closeComponent = (): void => {
-  isClosing.value = true;
-  stopConfetti();
+const onPointerEnter = (): void => {
+  isHovered.value = true;
+};
+const onPointerLeave = (): void => {
+  isHovered.value = false;
 };
 
 const handleAnimationEnd = (e: AnimationEvent): void => {
@@ -297,6 +479,7 @@ class EulerMass {
 }
 
 class Paper {
+  public dead = false;
   pos = { x: Math.random() * window.innerWidth, y: Math.random() * -window.innerHeight };
   rotationSpeed = Math.random() * 600 + 800;
   angle = DEG_TO_RAD * Math.random() * 360;
@@ -323,9 +506,13 @@ class Paper {
     this.rotation += this.rotationSpeed * dt;
     this.pos.x += Math.cos(this.time * this.oscSpeed) * this.xSpeed * dt;
     this.pos.y += this.ySpeed * dt;
-    if (this.pos.y > window.innerHeight) {
-      this.pos.x = Math.random() * window.innerWidth;
-      this.pos.y = -50;
+    if (this.pos.y > window.innerHeight + 100) {
+      if (isConfettiStopping) {
+        this.dead = true;
+      } else {
+        this.pos.x = Math.random() * window.innerWidth;
+        this.pos.y = -50;
+      }
     }
   }
   draw(retina: number): void {
@@ -350,6 +537,7 @@ let h = window.innerHeight;
 let retina = Math.min(2, window.devicePixelRatio || 1);
 
 class ConfettiRibbon {
+  public dead = false;
   particleCount = 20;
   particleDist = 8.0;
   particles: EulerMass[] = [];
@@ -419,13 +607,17 @@ class ConfettiRibbon {
       this.particles[i].pos.y = this.particles[i - 1].pos.y + rpY * this.particleDist;
     }
     if (this.pos.y > h + this.particleDist * this.particleCount) {
-      this.pos.y = -Math.random() * h;
-      this.pos.x = Math.random() * w;
-      this.prevPos.x = this.pos.x;
-      this.prevPos.y = this.pos.y;
-      for (let i = 0; i < this.particleCount; i++) {
-        this.particles[i].pos.x = this.pos.x;
-        this.particles[i].pos.y = this.pos.y - i * this.particleDist;
+      if (isConfettiStopping) {
+        this.dead = true;
+      } else {
+        this.pos.y = -Math.random() * h;
+        this.pos.x = Math.random() * w;
+        this.prevPos.x = this.pos.x;
+        this.prevPos.y = this.pos.y;
+        for (let i = 0; i < this.particleCount; i++) {
+          this.particles[i].pos.x = this.pos.x;
+          this.particles[i].pos.y = this.pos.y - i * this.particleDist;
+        }
       }
     }
   }
@@ -453,13 +645,26 @@ class ConfettiRibbon {
 }
 
 const stopConfetti = (): void => {
-  if (confettiRef.value) confettiRef.value.style.opacity = '0';
   isConfettiStopping = true;
-  cancelAnimationFrame(rafId);
+};
+
+const closeComponent = (): void => {
+  isKeeping.value = true;
+  stopConfetti();
 };
 
 onMounted(() => {
   audioStore.triggerBirthdayMode();
+  presentRafId = requestAnimationFrame(updatePresentAnimation);
+
+  setTimeout(() => {
+    showGift.value = true;
+    hintTimeout = setTimeout(() => {
+      if (!opening.value && !opened.value) {
+        showHint.value = true;
+      }
+    }, 4000);
+  }, 1500);
 
   if (!confettiRef.value) return;
   const context = confettiRef.value.getContext('2d');
@@ -483,18 +688,33 @@ onMounted(() => {
     dt = Math.min(dt, 0.05);
 
     ctx.clearRect(0, 0, w * retina, h * retina);
+
+    entities.splice(0, entities.length, ...entities.filter((e) => !e.dead));
+
     entities.forEach((p) => {
       p.update(dt);
       p.draw(retina);
     });
 
-    if (!isConfettiStopping) rafId = requestAnimationFrame(animate);
+    if (isConfettiStopping && entities.length === 0) {
+      cancelAnimationFrame(rafId);
+      if (isKeeping.value && !isClosing.value) {
+        isClosing.value = true;
+        setTimeout(() => {
+          emit('close');
+        }, 500);
+      }
+    } else {
+      rafId = requestAnimationFrame(animate);
+    }
   };
   animate();
 });
 
 onUnmounted(() => {
   stopConfetti();
+  clearTimeout(hintTimeout);
+  cancelAnimationFrame(presentRafId);
 });
 </script>
 
@@ -510,10 +730,12 @@ onUnmounted(() => {
   z-index: 1000;
   width: 100%;
   height: 100%;
+  overflow: hidden;
   pointer-events: none;
 }
 .birthday-present-container.is-closing {
-  animation: handBackToTop 1s ease-in-out forwards;
+  opacity: 0;
+  transition: opacity 0.5s ease;
   pointer-events: none;
 }
 
@@ -528,94 +750,378 @@ onUnmounted(() => {
 }
 
 .tres-wrapper {
+  position: absolute;
+  transform: scale(0.5) translateY(50px);
+  opacity: 0;
   z-index: 10;
-  cursor: pointer;
-  width: min(80vw, 400px);
-  height: min(80vw, 400px);
+  transition: all 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+}
+
+.tres-wrapper.is-visible {
+  transform: scale(1) translateY(0);
+  opacity: 1;
+}
+
+.tres-wrapper :deep(canvas) {
   pointer-events: auto;
+}
+.tres-wrapper.is-kept,
+.tres-wrapper.is-kept :deep(canvas) {
+  pointer-events: none !important;
 }
 
 .interact-hint {
   position: absolute;
-  bottom: 20%;
-  transition: opacity 0.5s;
+  bottom: 15%;
+  transform: translateY(10px);
+  opacity: 0;
+  z-index: 15;
+  transition: all 0.8s ease;
   pointer-events: none;
   color: #fff;
   font-weight: 800;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   letter-spacing: 2px;
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
 }
 
-.close-btn {
-  position: absolute;
-  bottom: 10%;
-  backdrop-filter: blur(10px);
-  transition: all 0.2s;
-  cursor: pointer;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-  border: 2px solid rgba(255, 255, 255, 0.6);
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.2);
-  padding: 12px 24px;
-  pointer-events: auto;
-  color: #fff;
-  font-weight: 800;
-  font-size: 16px;
-}
-.close-btn:hover {
-  transform: translateY(-2px);
-  background: rgba(255, 255, 255, 0.4);
-}
-.close-btn:active {
-  transform: translateY(1px);
+.interact-hint.is-visible {
+  transform: translateY(0);
+  opacity: 1;
 }
 
-.bday-card-ui {
+.envelope-wrapper {
   position: absolute;
-  top: 45%;
+  top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%) scale(0.9);
+  transform: translate(-50%, 50vh) scale(0.6);
   opacity: 0;
   z-index: 20;
-  transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-  width: 80%;
-  max-width: 340px;
+  transition:
+    transform 1s cubic-bezier(0.34, 1.56, 0.64, 1),
+    opacity 0.8s ease;
+  width: 320px;
   pointer-events: none;
 }
 
-.bday-card-ui.is-visible {
-  transform: translate(-50%, -50%) scale(1);
+.envelope-wrapper.is-visible {
+  transform: translate(-50%, -30%) scale(1);
   opacity: 1;
   pointer-events: auto;
 }
 
-.bday-card-inner {
-  backdrop-filter: blur(10px);
-  box-shadow:
-    0 10px 30px rgba(0, 0, 0, 0.15),
-    0 0 0 4px rgba(255, 77, 121, 0.2);
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.95);
-  padding: 24px;
-  color: #333;
-  text-align: center;
+.envelope-wrapper.is-kept {
+  transform: translate(-50%, 100vh) scale(0.8) !important;
+  opacity: 0 !important;
+  transition:
+    transform 1s cubic-bezier(0.6, -0.28, 0.735, 0.045),
+    opacity 0.8s ease 0.2s !important;
 }
 
-.bday-card-title {
-  margin: 0 0 16px 0;
+.envelope {
+  position: relative;
+  perspective: 1000px;
+  box-shadow:
+    0 15px 35px rgba(0, 0, 0, 0.2),
+    0 3px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  background: #ffe6e6;
+  width: 320px;
+  height: 180px;
+}
+
+.envelope:after {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  border: 0 solid rgba(0, 0, 0, 0.15);
+  border-width: 80px 160px;
+  border-top-color: transparent;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  content: '';
+}
+
+.envelope .flap {
+  position: absolute;
+  z-index: 3;
+  border: 0 solid transparent;
+  border-width: 90px 160px;
+  width: 100%;
+  height: 0;
+}
+
+.envelope .flap.front {
+  z-index: 3;
+  border-right-color: #ffccd5;
+  border-bottom-color: #ffb3c6;
+  border-left-color: #ffccd5;
+  border-bottom-right-radius: 4px;
+  border-bottom-left-radius: 4px;
+}
+
+.envelope .flap.front:after {
+  position: absolute;
+  bottom: -90px;
+  left: -160px;
+  border: 0 solid transparent;
+  border-width: 89px 160px;
+  border-bottom-color: #ffccd5;
+  width: 100%;
+  height: 0;
+  content: '';
+}
+
+.envelope .flap.top {
+  transform-origin: top;
+  transform-style: preserve-3d;
+  z-index: 4;
+  animation-fill-mode: forwards;
+  border-top-width: 95px;
+  border-top-color: #ff99ac;
+}
+
+.envelope-wrapper.is-open .flap.top {
+  animation: flapOpen 1.2s ease-in-out forwards;
+}
+@keyframes flapOpen {
+  0% {
+    transform: rotateX(0deg);
+    z-index: 4;
+  }
+  100% {
+    transform: rotateX(180deg);
+    z-index: 1;
+  }
+}
+
+.envelope .flap.top:after {
+  position: absolute;
+  top: -95px;
+  left: -160px;
+  border: 0 solid transparent;
+  border-width: 94px 160px;
+  border-top-color: #ffb3c6;
+  width: 100%;
+  height: 0;
+  content: '';
+}
+
+.envelope .letter {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  transform-style: preserve-3d;
+  z-index: 1;
+  width: 290px;
+  height: 110px;
+}
+
+.envelope-wrapper.is-open .letter {
+  animation: letterPullOut 2.5s ease-in-out 1.2s forwards;
+}
+@keyframes letterPullOut {
+  0% {
+    top: 15px;
+    z-index: 1;
+  }
+  40% {
+    top: -210px;
+    z-index: 1;
+  }
+  60% {
+    top: -210px;
+    z-index: 5;
+  }
+  100% {
+    top: -40px;
+    z-index: 5;
+  }
+}
+
+.fold {
+  position: absolute;
+  transform-style: preserve-3d;
+  transition: transform 1.8s ease-in-out;
+  width: 100%;
+  height: 110px;
+}
+
+.face {
+  position: absolute;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  inset: 0;
+  box-shadow: 0 0 1px rgba(0, 0, 0, 0.05);
+  background: #fffcfd;
+  overflow: hidden;
+}
+
+.face.back {
+  transform: rotateX(180deg);
+  border: 1px solid rgba(0, 0, 0, 0.03);
+  background: #fdfdfd;
+}
+
+.fold-middle {
+  top: 0;
+  z-index: 2;
+}
+
+.fold-top {
+  top: -110px;
+  transform: rotateX(-179.9deg);
+  transform-origin: bottom;
+  z-index: 1;
+}
+
+.fold-bottom {
+  top: 110px;
+  transform: rotateX(179.9deg);
+  transform-origin: top;
+  z-index: 1;
+}
+
+.letter.is-unfolded .fold-top {
+  transform: rotateX(0deg);
+  transition-delay: 0s;
+}
+
+.letter.is-unfolded .fold-bottom {
+  transform: rotateX(0deg);
+  transition-delay: 0.8s;
+}
+
+.letter-content-wrapper {
+  display: flex;
+  position: absolute;
+  left: 0;
+  flex-direction: column;
+  box-sizing: border-box;
+  background: #fffcfd;
+  padding: 20px 20px 15px 20px;
+  width: 290px;
+  height: 330px;
+}
+
+.fold-top .letter-content-wrapper {
+  top: 0;
+  pointer-events: none;
+}
+.fold-middle .letter-content-wrapper {
+  top: -110px;
+  pointer-events: none;
+}
+.fold-bottom .letter-content-wrapper {
+  top: -220px;
+}
+
+.shadow-letter {
+  width: 290px !important;
+  height: 330px !important;
+}
+.shadow-letter .letter-content-wrapper {
+  position: relative !important;
+  top: 0 !important;
+}
+
+.letter-title {
+  margin: 0 0 10px 0;
   color: #ff4d79;
   font-weight: 800;
   font-size: 1.2rem;
   letter-spacing: 2px;
+  text-align: center;
 }
 
-.bday-card-text {
-  margin: 0;
+.letter-text {
+  flex: 1;
+  overflow: hidden;
   color: #555;
-  font-size: 1rem;
-  line-height: 1.6;
-  text-align: left;
+  font-size: 1.05rem;
+  line-height: 1.8;
+  text-align: justify;
   white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.pagination {
+  display: flex;
+  flex-shrink: 0;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  border-top: 1px dashed rgba(255, 77, 121, 0.3);
+  padding-top: 10px;
+  height: 25px;
+  color: #888;
+  font-size: 0.9rem;
+}
+
+.pagination button {
+  transition: opacity 0.2s;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: #ff4d79;
+  font-weight: bold;
+}
+.pagination button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.close-btn {
+  position: absolute;
+  bottom: 8%;
+  z-index: 30;
+  backdrop-filter: blur(5px);
+  transition: all 0.3s;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(255, 77, 121, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 25px;
+  background: #ff4d79;
+  padding: 12px 30px;
+  pointer-events: auto;
+  color: #fff;
+  font-weight: 800;
+  font-size: 16px;
+  letter-spacing: 1px;
+}
+
+.close-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 77, 121, 0.4);
+  background: #ff3366;
+}
+
+.close-btn:active {
+  transform: translateY(1px);
+}
+
+.close-btn.is-kept {
+  transform: translateY(50px);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.shadow-measure {
+  position: fixed !important;
+  top: -9999px !important;
+  left: -9999px !important;
+  visibility: hidden !important;
+  z-index: -9999;
+  pointer-events: none !important;
+}
+
+.shadow-letter {
+  transition: none !important;
 }
 </style>

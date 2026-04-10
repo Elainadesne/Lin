@@ -1,47 +1,54 @@
 <template>
-  <div
-    class="tarot-card-wrapper"
-    :class="{ 'is-closing': isClosing }"
-    @animationend="handleAnimationEnd"
-  >
-    <div class="tarot-hover-box" @click="handleFlip">
-      <div class="tarot-flip-container">
-        <div
-          class="tarot-inner"
-          :style="{ transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }"
-        >
-          <div class="tarot-back">
-            <div class="tarot-back-text">?</div>
-          </div>
-
-          <div class="tarot-front">
-            <img
-              :src="currentCardUrl"
-              class="tarot-img"
-              :class="{ 'tarot-reversed': isReversed }"
-              alt="塔罗牌面"
-            />
+  <div class="tarot-scene">
+    <div class="tarot-ui-backdrop" :class="{ 'show-ui': showUI }">
+      <div
+        ref="cardRef"
+        class="tarot-card-container"
+        tabindex="0"
+        :style="tiltStyle"
+        @mousemove="handleMouseMove"
+        @mouseleave="handleMouseLeave"
+        @blur="handleMouseLeave"
+        @click="handleFlip"
+      >
+        <div class="tarot-flip-container">
+          <div
+            class="tarot-inner"
+            :style="{ transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }"
+          >
+            <div class="tarot-back">
+              <div class="tarot-back-text">?</div>
+            </div>
+            <div class="tarot-front">
+              <img
+                :src="currentCardUrl"
+                class="tarot-img"
+                :class="{ 'tarot-reversed': isReversed }"
+                alt="塔罗牌面"
+              />
+            </div>
           </div>
         </div>
       </div>
+
+      <div class="tarot-text-area">
+        <p class="tarot-title">
+          <span
+            class="tarot-title-text"
+            :style="{
+              opacity: showTitle ? 1 : 0,
+              transform: showTitle ? 'translateY(0)' : 'translateY(-8px)',
+            }"
+            @transitionend="handleTitleTransitionEnd"
+          >
+            {{ titleText }}
+          </span>
+        </p>
+        <button class="close-overlay-btn" @click="handleClose">
+          {{ isFlipped ? '收起卡片' : '不看了，收起卡片' }}
+        </button>
+      </div>
     </div>
-
-    <p class="tarot-title">
-      <span
-        class="tarot-title-text"
-        :style="{
-          opacity: showTitle ? 1 : 0,
-          transform: showTitle ? 'translateY(0)' : 'translateY(-8px)',
-        }"
-        @transitionend="handleTitleTransitionEnd"
-      >
-        {{ titleText }}
-      </span>
-    </p>
-
-    <button class="close-overlay-btn" @click="handleClose">
-      {{ isFlipped ? '收起卡片' : '不看了，收起卡片' }}
-    </button>
   </div>
 </template>
 
@@ -55,6 +62,7 @@ import type { TarotCard } from '../../types';
 const emit = defineEmits<(e: 'close') => void>();
 
 const chatStore = useChatStore();
+const messageSync = useMessageSync();
 
 const majorArcana: TarotCard[] = [
   { id: '00_The_Fool', path: 'Major Arcana/00_The_Fool.webp', cn: '愚者' },
@@ -125,6 +133,30 @@ const isClosing = ref(false);
 const titleText = ref('点击卡牌翻开');
 const showTitle = ref(true);
 
+const showUI = ref(false);
+const cardRef = ref<HTMLElement | null>(null);
+const tiltStyle = ref(
+  'transform: perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1);',
+);
+
+const handleMouseMove = (e: MouseEvent): void => {
+  if (!cardRef.value) return;
+  const rect = cardRef.value.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  const centerX = rect.width / 2;
+  const centerY = rect.height / 2;
+
+  const rotateX = ((y - centerY) / centerY) * -15;
+  const rotateY = ((x - centerX) / centerX) * 15;
+
+  tiltStyle.value = `transform: perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.05, 1.05, 1.05); transition: transform 0.1s ease-out;`;
+};
+
+const handleMouseLeave = (): void => {
+  tiltStyle.value = `transform: perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1); transition: transform 0.5s ease-out;`;
+};
+
 const currentCardUrl = computed(() => {
   if (!randomCard.value) return '';
   const baseUrl = import.meta.env.BASE_URL || '/';
@@ -134,6 +166,10 @@ const currentCardUrl = computed(() => {
 onMounted(() => {
   randomCard.value = tarotDeck[Math.floor(Math.random() * tarotDeck.length)];
   isReversed.value = Math.random() > 0.5;
+
+  setTimeout(() => {
+    showUI.value = true;
+  }, 1200);
 });
 
 const handleFlip = (): void => {
@@ -144,7 +180,6 @@ const handleFlip = (): void => {
 
     showTitle.value = false;
 
-    const messageSync = useMessageSync();
     if (!messageSync.isDevTest.value) {
       const orientation = isReversed.value ? '逆位' : '正位';
       const report = `系统提示：来访者刚刚翻开了一张塔罗牌。【抽牌结果】：${randomCard.value.cn} (${randomCard.value.id})【牌面状态】：${orientation}`;
@@ -170,65 +205,164 @@ const handleClose = (): void => {
   }
 
   isClosing.value = true;
-};
 
-const handleAnimationEnd = (e: AnimationEvent): void => {
-  if (e.animationName === 'handBackToTop') {
+  showUI.value = false;
+
+  setTimeout(() => {
+    if (cardRef.value) {
+      tiltStyle.value = '';
+      cardRef.value.classList.add('fly-away');
+    }
+  }, 100);
+
+  setTimeout(() => {
     emit('close');
-  }
+  }, 1100);
 };
 </script>
 
 <style scoped>
-.tarot-card-wrapper.is-closing {
-  animation: handBackToTop 1s ease-in-out forwards;
+.tarot-scene {
+  display: flex;
+  position: relative;
+  flex-direction: column;
+  align-items: center;
+  animation: handOverFromTop 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  width: 100%;
   pointer-events: none;
 }
 
+.tarot-card-container.fly-away {
+  animation: handBackToTopNoFade 1s cubic-bezier(0.36, 0, 0.66, -0.56) forwards;
+  pointer-events: none;
+}
+
+@keyframes handBackToTopNoFade {
+  0% {
+    transform: translateY(0) rotateX(0) scale(1);
+  }
+  30% {
+    transform: translateY(5vh) rotateX(-5deg) scale(1.05);
+  }
+  100% {
+    transform: translateY(-120vh) rotateX(45deg) scale(0.8);
+  }
+}
+
+.tarot-ui-backdrop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  transition:
+    background-color 0.8s ease,
+    box-shadow 0.8s ease,
+    border-color 0.8s ease;
+  box-shadow: none;
+  border: 1px solid transparent;
+  border-radius: 12px;
+
+  background: transparent;
+  padding: 20px 20px 10px 20px;
+  width: 280px;
+  max-width: 90vw;
+  pointer-events: auto;
+}
+
+.tarot-ui-backdrop.show-ui {
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+  border-color: rgba(0, 0, 0, 0.1);
+  background: #fff;
+}
+body.dark-mode .tarot-ui-backdrop.show-ui {
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8);
+  border-color: rgba(255, 255, 255, 0.1);
+  background: #24283b;
+}
+
+.tarot-card-container {
+  position: relative;
+  transform-style: preserve-3d;
+  z-index: 10;
+  will-change: transform;
+  cursor: pointer;
+  outline: none;
+}
+
+.tarot-text-area {
+  transform: translateY(10px);
+  opacity: 0;
+  transition:
+    opacity 0.8s ease,
+    transform 0.8s ease;
+  margin-top: 15px;
+  width: 100%;
+}
+
+.tarot-ui-backdrop.show-ui .tarot-text-area {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.tarot-flip-container {
+  position: relative;
+  width: 220px;
+  height: 360px;
+}
 .tarot-inner {
   position: relative;
   transform-style: preserve-3d;
   transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  width: 100%;
-  height: 100%;
-}
-
-.tarot-back {
-  display: flex;
-  position: absolute;
-  justify-content: center;
-  align-items: center;
-  backface-visibility: hidden;
-  box-sizing: border-box;
-  box-shadow:
-    inset 0 0 20px rgba(0, 0, 0, 0.1),
-    0 10px 20px rgba(0, 0, 0, 0.15);
-  border: 8px solid #fcfcfc;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
   border-radius: 12px;
-  background: linear-gradient(135deg, #a29bfe, #fd79a8);
   width: 100%;
   height: 100%;
 }
-
+.tarot-back,
 .tarot-front {
   position: absolute;
-  transform: rotateY(180deg);
   backface-visibility: hidden;
   box-sizing: border-box;
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
   border: 8px solid #fcfcfc;
   border-radius: 12px;
-  background: #fff;
   width: 100%;
   height: 100%;
   overflow: hidden;
 }
-
+.tarot-back {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #a29bfe, #fd79a8);
+}
+.tarot-front {
+  transform: rotateY(180deg);
+  background: #fff;
+}
+.tarot-back-text {
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: bold;
+  font-size: 80px;
+  font-family: var(--font-ui-sans);
+}
+.tarot-img {
+  aspect-ratio: 5 / 8;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.tarot-reversed {
+  transform: rotate(180deg);
+}
 .tarot-title {
-  margin-bottom: 5px;
+  margin-bottom: 15px;
   min-height: 24px;
   font-weight: 800;
   font-size: 16px;
   text-align: center;
+}
+.tarot-title-text {
+  display: inline-block;
+  transition: all 0.4s ease;
 }
 </style>
