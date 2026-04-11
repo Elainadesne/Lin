@@ -1,7 +1,7 @@
 import { templateCompilerOptions } from '@tresjs/core';
 import vue from '@vitejs/plugin-vue';
 import autoprefixer from 'autoprefixer';
-import { defineConfig, ESBuildOptions } from 'vite';
+import { defineConfig } from 'vite';
 import Font from 'vite-plugin-font';
 
 export default defineConfig(({ mode }) => {
@@ -31,32 +31,29 @@ export default defineConfig(({ mode }) => {
     build: {
       emptyOutDir: true,
       chunkSizeWarningLimit: 1500,
-      rollupOptions: {
+
+      rolldownOptions: {
+        experimental: {
+          lazyBarrel: true,
+          nativeMagicString: true,
+        },
+
         output: {
-          manualChunks(id: string): string | undefined {
-            if (id.includes('node_modules')) {
-              if (id.includes('vue')) return 'vendor-vue';
-              if (id.includes('@vueuse')) return 'vendor-vueuse';
-              if (id.includes('pinia')) return 'vendor-pinia';
-              if (id.includes('three')) return 'vendor-three';
-              if (id.includes('@tresjs')) return 'vendor-tresjs';
-              if (id.includes('howler')) return 'vendor-howler';
-              if (id.includes('marked')) return 'vendor-marked';
-              if (id.includes('dompurify')) return 'vendor-dompurify';
-              if (id.includes('roughjs')) return 'vendor-roughjs';
-              if (id.includes('flatpickr')) return 'vendor-flatpickr';
-              if (id.includes('@tanstack')) return 'vendor-tanstack';
-              return 'vendor';
-            }
-          },
+          minify: isProd
+            ? {
+                compress: {
+                  dropConsole: true,
+                  dropDebugger: true,
+                },
+              }
+            : true,
+
           chunkFileNames: 'assets/js/[name]-[hash].js',
           entryFileNames: 'assets/js/[name]-[hash].js',
           assetFileNames: 'assets/[ext]/[name]-[hash].[ext]',
         },
       },
     },
-
-    esbuild: (isProd ? { drop: ['console', 'debugger'] } : undefined) as ESBuildOptions | undefined,
 
     optimizeDeps: {
       include: [
