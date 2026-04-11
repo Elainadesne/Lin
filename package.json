@@ -65,12 +65,5 @@
     "vite": "^8.0.8",
     "vite-plugin-font": "^5.1.2",
     "vue-tsc": "^3.2.6"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "cn-font-split",
-      "koffi",
-      "protobufjs"
-    ]
   }
 }
