@@ -1,6 +1,7 @@
 import { templateCompilerOptions } from '@tresjs/core';
 import vue from '@vitejs/plugin-vue';
-import autoprefixer from 'autoprefixer';
+import browserslist from 'browserslist';
+import { browserslistToTargets } from 'lightningcss';
 import { defineConfig } from 'vite';
 import Font from 'vite-plugin-font';
 
@@ -17,8 +18,9 @@ export default defineConfig(({ mode }) => {
     base: '/Lin/',
 
     css: {
-      postcss: {
-        plugins: [autoprefixer()],
+      transformer: 'lightningcss',
+      lightningcss: {
+        targets: browserslistToTargets(browserslist()),
       },
     },
 
@@ -32,12 +34,13 @@ export default defineConfig(({ mode }) => {
       emptyOutDir: true,
       chunkSizeWarningLimit: 1500,
 
+      cssMinify: 'lightningcss',
+
       rolldownOptions: {
         experimental: {
           lazyBarrel: true,
           nativeMagicString: true,
         },
-
         output: {
           minify: isProd
             ? {
