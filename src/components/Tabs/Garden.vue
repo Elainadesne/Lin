@@ -224,6 +224,10 @@ const initBeastAnimation = (): void => {
   const beasts = Array.from({ length: 3 }, (_, i) => new Beast(-100 - i * 120));
 
   const animate = (): void => {
+    if (appStore.activeTab !== 2) {
+      animFrameId = requestAnimationFrame(animate);
+      return;
+    }
     const time = performance.now() / 1000;
     ctx.clearRect(0, 0, cw, ch);
 

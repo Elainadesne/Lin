@@ -57,49 +57,46 @@ const adjustTabs = async (): Promise<void> => {
   const maxBottom = notebookRect.bottom - 15;
   const maxRight = notebookRect.right - 50;
 
+  const tabsInfo = Array.from(tabElements).map((tabEl) => ({
+    el: tabEl,
+    index: parseInt(tabEl.getAttribute('data-index') ?? '0'),
+    rect: tabEl.getBoundingClientRect(),
+    width: tabEl.offsetWidth,
+  }));
+
   let topOffset = 60;
   let bottomOffset = 60;
   let placement: 'right' | 'top' | 'bottom' = 'right';
 
   const newStyles: Record<number, { position: TabPosition; left: string }> = {};
 
-  tabElements.forEach((tabEl) => {
-    tabEl.classList.remove('is-top-tab', 'is-bottom-tab');
-    tabEl.style.left = '';
-
-    const index = parseInt(tabEl.getAttribute('data-index') ?? '0');
+  tabsInfo.forEach((tab) => {
     let currentLeft = '';
 
     if (placement === 'right') {
-      if (tabEl.getBoundingClientRect().bottom > maxBottom) {
+      if (tab.rect.bottom > maxBottom) {
         placement = 'top';
       }
     }
 
     if (placement === 'top') {
       currentLeft = `${topOffset}px`;
-      tabEl.style.left = currentLeft;
-      tabEl.classList.add('is-top-tab');
+      const estimatedRightEdge = notebookRect.left + topOffset + tab.width;
 
-      const currentRightEdge = tabEl.getBoundingClientRect().right;
-
-      if (currentRightEdge > maxRight) {
-        tabEl.classList.remove('is-top-tab');
-        tabEl.style.left = '';
+      if (estimatedRightEdge > maxRight) {
         placement = 'bottom';
+        currentLeft = '';
       } else {
-        topOffset += tabEl.getBoundingClientRect().width + 8;
+        topOffset += tab.width + 8;
       }
     }
 
     if (placement === 'bottom') {
       currentLeft = `${bottomOffset}px`;
-      tabEl.style.left = currentLeft;
-      tabEl.classList.add('is-bottom-tab');
-      bottomOffset += tabEl.getBoundingClientRect().width + 8;
+      bottomOffset += tab.width + 8;
     }
 
-    newStyles[index] = { position: placement, left: currentLeft };
+    newStyles[tab.index] = { position: placement, left: currentLeft };
   });
 
   tabStyles.value = newStyles;

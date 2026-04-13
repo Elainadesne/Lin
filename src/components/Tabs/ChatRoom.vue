@@ -46,7 +46,12 @@
                 : {}
             "
           >
-            <div v-html="renderMarkdown(listData[virtualRow.index].rawText)"></div>
+            <div
+              v-html="
+                listData[virtualRow.index].parsedHtml ||
+                renderMarkdown(listData[virtualRow.index].rawText)
+              "
+            ></div>
           </div>
         </div>
       </div>
@@ -175,7 +180,7 @@
 
 <script setup lang="ts">
 import { useVirtualizer } from '@tanstack/vue-virtual';
-import { useResizeObserver } from '@vueuse/core';
+import { useResizeObserver, useThrottleFn } from '@vueuse/core';
 import { Mandarin } from 'flatpickr/dist/l10n/zh.js';
 import { computed, inject, nextTick, onMounted, ref, watch } from 'vue';
 import FlatPickr from 'vue-flatpickr-component';
@@ -215,9 +220,10 @@ watch(inputText, (newVal) => {
 const adjustInputHeight = (): void => {
   const el = chatInputRef.value;
   if (!el) return;
-  el.style.height = 'auto';
-  el.style.height = `${el.scrollHeight}px`;
-  triggerScrollPadding();
+  requestAnimationFrame(() => {
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  });
 };
 
 const handleSend = (): void => {
@@ -267,7 +273,7 @@ const checkPendingTrigger = (): void => {
   }
 };
 
-const updateScrollState = (): void => {
+const updateScrollState = useThrottleFn((): void => {
   if (scrollContainerRef.value) {
     scrollState.value = {
       scrollTop: scrollContainerRef.value.scrollTop,
@@ -276,7 +282,7 @@ const updateScrollState = (): void => {
     };
     checkPendingTrigger();
   }
-};
+}, 100);
 
 watch(
   () => messageSync.pendingTarot.value,
@@ -305,7 +311,7 @@ watch(
   () => listData.value.length,
   async () => {
     await nextTick();
-    updateScrollState();
+    void updateScrollState();
   },
 );
 
@@ -402,21 +408,26 @@ const handlePointerDown = (e: PointerEvent): void => {
   handlePointerMove(e);
 };
 
+let isTicking = false;
 const handlePointerMove = (e: PointerEvent): void => {
-  if (!isDraggingTimeline.value || !scrollbarTrackRef.value || !scrollContainerRef.value) return;
+  const track = scrollbarTrackRef.value;
+  const container = scrollContainerRef.value;
+  if (!isDraggingTimeline.value || !track || !container) return;
   hasDraggedTimeline = true;
 
-  const trackRect = scrollbarTrackRef.value.getBoundingClientRect();
-  const trackHeight = trackRect.height;
+  if (!isTicking) {
+    window.requestAnimationFrame(() => {
+      const trackRect = track.getBoundingClientRect();
+      const trackHeight = trackRect.height;
+      const pointerY = Math.max(0, Math.min(e.clientY - trackRect.top, trackHeight));
+      const percentage = pointerY / trackHeight;
+      const maxScrollTop = container.scrollHeight - container.clientHeight;
 
-  const pointerY = Math.max(0, Math.min(e.clientY - trackRect.top, trackHeight));
-
-  const percentage = pointerY / trackHeight;
-
-  const scrollContainer = scrollContainerRef.value;
-  const maxScrollTop = scrollContainer.scrollHeight - scrollContainer.clientHeight;
-
-  scrollContainer.scrollTop = percentage * maxScrollTop;
+      container.scrollTop = percentage * maxScrollTop;
+      isTicking = false;
+    });
+    isTicking = true;
+  }
 };
 
 const handlePointerUp = (): void => {
@@ -435,17 +446,20 @@ const scrollToMessage = (index: number): void => {
   rowVirtualizer.value.scrollToIndex(index, { align: 'start' });
 };
 
-const triggerScrollPadding = (): void => {
-  const wrapper = document.getElementById('chat-input-wrapper');
-  if (wrapper) {
-    inputBottomSpace.value = wrapper.offsetHeight + 15;
-  }
-};
-
 onMounted(() => {
   const wrapper = document.getElementById('chat-input-wrapper');
   if (wrapper) {
-    useResizeObserver(wrapper, triggerScrollPadding);
+    useResizeObserver(wrapper, (entries) => {
+      const entry = entries[0];
+      if (entry) {
+        const boxHeight =
+          entry.borderBoxSize && entry.borderBoxSize.length > 0
+            ? entry.borderBoxSize[0].blockSize
+            : entry.contentRect.height + 22;
+
+        inputBottomSpace.value = boxHeight + 15;
+      }
+    });
   }
 });
 
@@ -586,7 +600,6 @@ const fpConfig = computed(() => {
 });
 
 onMounted(() => {
-  triggerScrollPadding();
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       void scrollToLatest();
@@ -791,29 +804,35 @@ body.dark-mode .input-wrapper.is-pending-item textarea {
   color: #a3d9b1;
 }
 
-@keyframes pendingPulseLight {
+.input-wrapper.is-pending-item::before {
+  position: absolute;
+  z-index: -1;
+  animation: pulseOpacity 2s infinite alternate ease-in-out;
+  will-change: transform, opacity;
+  inset: 0;
+  border-radius: 16px;
+  background: rgba(163, 217, 177, 0.3);
+  content: '';
+}
+@keyframes pulseOpacity {
   0% {
     transform: scale(1);
-    border-radius: 20px;
-    background: rgba(255, 255, 255, 0.65);
+    opacity: 0.5;
   }
   100% {
-    transform: scale(1.02) translateY(-2px);
-    border-radius: 12px;
-    background: rgba(230, 250, 235, 0.95);
+    transform: scale(1.02);
+    opacity: 1;
   }
 }
 
 @keyframes pendingPulseDark {
   0% {
     transform: scale(1);
-    border-radius: 20px;
-    background: rgba(0, 0, 0, 0.3);
+    opacity: 0.6;
   }
   100% {
     transform: scale(1.02) translateY(-2px);
-    border-radius: 12px;
-    background: rgba(30, 50, 40, 0.8);
+    opacity: 1;
   }
 }
 .timeline-tooltip {

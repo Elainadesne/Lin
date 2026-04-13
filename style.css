@@ -107,11 +107,13 @@ body {
 body::before,
 body::after {
   position: fixed;
+  transform: translateZ(0);
   opacity: 0.5;
   z-index: -1;
   mix-blend-mode: multiply;
   filter: blur(80px);
   animation: bg-drift 15s infinite alternate ease-in-out;
+  will-change: transform;
   border-radius: 50%;
   pointer-events: none;
   content: '';
