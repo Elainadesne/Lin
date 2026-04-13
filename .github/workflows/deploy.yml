@@ -5,7 +5,7 @@ on:
     branches: ['main']
 
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
@@ -15,22 +15,18 @@ concurrency:
 
 jobs:
   deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-
-      - name: Check Runner IP
-        run: |
-          echo "Current Runner Public IP:"
-          curl -s https://checkip.amazonaws.com
 
       - name: Install pnpm
         uses: pnpm/action-setup@v6
         with:
-          version: latest
+          version: 10
 
       - name: Set up Node
         uses: actions/setup-node@v6
@@ -44,10 +40,14 @@ jobs:
       - name: Build
         run: pnpm run build
 
-      - name: Deploy to gh-pages branch
-        uses: peaceiris/actions-gh-pages@v4
+      - name: Setup Pages
+        uses: actions/configure-pages@v6
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v5.0.0
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
-          publish_branch: gh-pages
-          keep_files: false
+          path: './dist'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
