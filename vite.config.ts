@@ -1,7 +1,5 @@
 import { templateCompilerOptions } from '@tresjs/core';
 import vue from '@vitejs/plugin-vue';
-import browserslist from 'browserslist';
-import { browserslistToTargets } from 'lightningcss';
 import { defineConfig } from 'vite';
 import Font from 'vite-plugin-font';
 
@@ -17,13 +15,6 @@ export default defineConfig(({ mode }) => {
     ],
     base: '/Lin/',
 
-    css: {
-      transformer: 'lightningcss',
-      lightningcss: {
-        targets: browserslistToTargets(browserslist()),
-      },
-    },
-
     server: {
       host: true,
       port: 24121,
@@ -31,10 +22,10 @@ export default defineConfig(({ mode }) => {
     },
 
     build: {
+      target: 'baseline-widely-available',
+      sourcemap: true,
       emptyOutDir: true,
       chunkSizeWarningLimit: 1500,
-
-      cssMinify: 'lightningcss',
 
       rolldownOptions: {
         experimental: {

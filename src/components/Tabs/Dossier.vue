@@ -11,7 +11,7 @@
 
   <div class="clean-dossier">
     <div class="cd-section">
-      <h3 class="cd-title">🔍 评估</h3>
+      <h2 class="cd-title">🔍 评估</h2>
       <div class="cd-grid">
         <div class="cd-box cd-full">
           <span class="cd-label">病历状态</span>
@@ -37,7 +37,7 @@
     </div>
 
     <div class="cd-section">
-      <h3 class="cd-title">🧠 解析</h3>
+      <h2 class="cd-title">🧠 解析</h2>
       <ul class="cd-list">
         <li>
           <strong class="cd-highlight">优势资源：</strong>
@@ -59,7 +59,7 @@
     </div>
 
     <div class="cd-section" style="margin-bottom: 20px">
-      <h3 class="cd-title">🛠️ 干预与目标</h3>
+      <h2 class="cd-title">🛠️ 干预与目标</h2>
       <ul class="cd-list">
         <li>
           <strong>干预方案：</strong>

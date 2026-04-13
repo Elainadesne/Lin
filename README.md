@@ -72,8 +72,6 @@ pnpm dev
   - [![vue-flatpickr-component](https://img.shields.io/badge/vue--flatpickr-4FC08D?logo=vuedotjs&logoColor=white)](https://github.com/ankurk91/vue-flatpickr-component) - flatpickr 的 Vue 组件包装。(采用 [MIT](public/licenses/npm/MIT-vue-flatpickr-component.txt) 协议)
   - [![marked](https://img.shields.io/badge/marked-000000?logo=markdown&logoColor=white)](https://marked.js.org/) - Markdown 解析器。(采用 [MIT](public/licenses/npm/MIT-marked.txt) 协议)
   - [![DOMPurify](https://img.shields.io/badge/DOMPurify-000000)](https://github.com/cure53/DOMPurify) - XSS 消毒库。(采用 [MPL-2.0 / Apache-2.0](public/licenses/npm/MPL-2.0-OR-Apache-2.0-dompurify.txt) 协议)
-  - [![Lightning CSS](https://img.shields.io/badge/Lightning_CSS-F5D110)](https://lightningcss.dev/) - CSS 转换器与压缩器。(采用 [MPL-2.0](public/licenses/npm/MPL-2.0-lightningcss.txt) 协议)
-  - [![Browserslist](https://img.shields.io/badge/Browserslist-DD3131)](https://github.com/browserslist/browserslist) - 浏览器兼容性配置工具。(采用 [MIT](public/licenses/npm/MIT-browserslist.txt) 协议)
   - [![vite-plugin-font](https://img.shields.io/badge/vite--plugin--font-646CFF?logo=vite&logoColor=white)](https://www.npmjs.com/package/vite-plugin-font) - 字体切片工具。(采用 [Apache-2.0](public/licenses/npm/Apache-2.0-vite-plugin-font.txt) 协议)
   - [![@vitejs/plugin-vue](https://img.shields.io/badge/plugin--vue-646CFF?logo=vite&logoColor=white)](https://github.com/vitejs/vite-plugin-vue) - Vite 的 Vue 支持。(采用 [MIT](public/licenses/npm/MIT-vitejs-plugin-vue.txt) 协议)
   - [![vue-tsc](https://img.shields.io/badge/vue--tsc-4FC08D?logo=vuedotjs&logoColor=white)](https://github.com/vuejs/language-tools) - Vue 类型检查工具。(采用 [MIT](public/licenses/npm/MIT-vue-tsc.txt) 协议)

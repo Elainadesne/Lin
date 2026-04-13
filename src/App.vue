@@ -11,7 +11,7 @@
       'app-ready': isAppReady,
     }"
   >
-    <div class="notebook">
+    <main class="notebook">
       <div id="spirals" class="spiral-container">
         <div v-for="i in 14" :key="i" class="spiral-ring"></div>
       </div>
@@ -85,14 +85,14 @@
           </div>
         </div>
       </div>
-    </div>
+    </main>
 
     <SideTabs />
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, provide, ref } from 'vue';
+import { onMounted, provide, ref } from 'vue';
 
 import GlobalOverlay from './components/Layout/GlobalOverlay.vue';
 import PullCord from './components/Layout/PullCord.vue';
@@ -143,17 +143,6 @@ onMounted(() => {
     });
   };
 
-  if (document.readyState === 'complete') {
-    initApp();
-  } else {
-    window.addEventListener('load', initApp);
-  }
-
-  const fallbackTimer = setTimeout(initApp, 10000);
-
-  onUnmounted(() => {
-    window.removeEventListener('load', initApp);
-    clearTimeout(fallbackTimer);
-  });
+  initApp();
 });
 </script>
