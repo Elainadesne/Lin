@@ -51,11 +51,14 @@ jobs:
           publish_branch: gh-pages
           keep_files: false
 
+      - name: Prepare Lighthouse Directory
+        run: |
+          mkdir -p .lighthouse-serve/Lin
+          cp -a dist/. .lighthouse-serve/Lin/
+
       - name: Audit URLs using Lighthouse
         uses: treosh/lighthouse-ci-action@v12
         with:
-          urls: |
-            http://localhost:8080/Lin/
           configPath: ./lighthouserc.json
           uploadArtifacts: true
           temporaryPublicStorage: true
