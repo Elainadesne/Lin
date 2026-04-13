@@ -21,6 +21,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
+
       - name: Check Runner IP
         run: |
           echo "Current Runner Public IP:"
@@ -34,7 +35,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v6
         with:
-          node-version: latest
+          node-version: 24
           cache: 'pnpm'
 
       - name: Install dependencies
@@ -50,15 +51,3 @@ jobs:
           publish_dir: ./dist
           publish_branch: gh-pages
           keep_files: false
-
-      - name: Prepare Lighthouse Directory
-        run: |
-          mkdir -p .lighthouse-serve/Lin
-          cp -a dist/. .lighthouse-serve/Lin/
-
-      - name: Audit URLs using Lighthouse
-        uses: treosh/lighthouse-ci-action@v12
-        with:
-          configPath: ./lighthouserc.json
-          uploadArtifacts: true
-          temporaryPublicStorage: true

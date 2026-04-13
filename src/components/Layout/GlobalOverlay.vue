@@ -20,12 +20,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, defineAsyncComponent, type Component } from 'vue';
 
 import { useMessageSync } from '../../composables/useMessageSync';
-import BirthdayPresent from '../Features/BirthdayPresent.vue';
-import ScaleForm from '../Features/ScaleForm.vue';
-import TarotCard from '../Features/TarotCard.vue';
+
+const BirthdayPresent = defineAsyncComponent(
+  () => import('../Features/BirthdayPresent.vue'),
+) as Component;
+const ScaleForm = defineAsyncComponent(() => import('../Features/ScaleForm.vue')) as Component;
+const TarotCard = defineAsyncComponent(() => import('../Features/TarotCard.vue')) as Component;
 
 const messageSync = useMessageSync();
 
