@@ -22,13 +22,20 @@
   <div class="setting-item">
     <label>字体大小 (Aa)</label>
     <div class="slider-with-input">
-      <input v-model.number="appStore.settings.fontSize" type="range" min="12" max="24" />
+      <input
+        v-model.number="appStore.settings.fontSize"
+        type="range"
+        min="12"
+        max="24"
+        aria-label="调整字体大小滑动条"
+      />
       <input
         v-model.number="appStore.settings.fontSize"
         type="number"
         min="12"
         max="24"
         class="num-input"
+        aria-label="字体大小输入框"
       />
     </div>
   </div>
@@ -36,13 +43,20 @@
   <div class="setting-item">
     <label>翻页速度 📖</label>
     <div class="slider-with-input">
-      <input v-model.number="appStore.settings.turnSpeed" type="range" min="1" max="10" />
+      <input
+        v-model.number="appStore.settings.turnSpeed"
+        type="range"
+        min="1"
+        max="10"
+        aria-label="调整翻页速度滑动条"
+      />
       <input
         v-model.number="appStore.settings.turnSpeed"
         type="number"
         min="1"
         max="10"
         class="num-input"
+        aria-label="翻页速度输入框"
       />
     </div>
   </div>
@@ -50,13 +64,20 @@
   <div class="setting-item">
     <label>音乐音量 🎵</label>
     <div class="slider-with-input">
-      <input v-model.number="appStore.settings.vol" type="range" min="0" max="100" />
+      <input
+        v-model.number="appStore.settings.vol"
+        type="range"
+        min="0"
+        max="100"
+        aria-label="调整音乐音量滑动条"
+      />
       <input
         v-model.number="appStore.settings.vol"
         type="number"
         min="0"
         max="100"
         class="num-input"
+        aria-label="音乐音量输入框"
       />
     </div>
   </div>
@@ -65,7 +86,11 @@
     <div class="setting-row">
       <label>背景音乐自动播放</label>
       <label class="switch">
-        <input v-model="appStore.settings.autoPlay" type="checkbox" />
+        <input
+          v-model="appStore.settings.autoPlay"
+          type="checkbox"
+          aria-label="开关：背景音乐自动播放"
+        />
         <span class="slider"></span>
       </label>
     </div>
@@ -75,6 +100,7 @@
         <input
           v-model="appStore.settings.syncEnvData"
           type="checkbox"
+          aria-label="开关：同步天气与节假日"
           @change="handleEnvSyncChange"
         />
         <span class="slider"></span>
@@ -83,14 +109,22 @@
     <div class="setting-row" style="margin-top: 15px">
       <label>启动时自动翻开</label>
       <label class="switch">
-        <input v-model="appStore.settings.autoOpen" type="checkbox" />
+        <input
+          v-model="appStore.settings.autoOpen"
+          type="checkbox"
+          aria-label="开关：启动时自动翻开"
+        />
         <span class="slider"></span>
       </label>
     </div>
     <div class="setting-row" style="margin-top: 15px">
       <label>全部使用系统字体</label>
       <label class="switch">
-        <input v-model="appStore.settings.useSysFont" type="checkbox" />
+        <input
+          v-model="appStore.settings.useSysFont"
+          type="checkbox"
+          aria-label="开关：全部使用系统字体"
+        />
         <span class="slider"></span>
       </label>
     </div>

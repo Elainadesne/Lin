@@ -133,7 +133,13 @@
         >
           📅
         </button>
-        <flat-pickr ref="fpRef" v-model="selectedDate" :config="fpConfig" class="hidden-fp-input" />
+        <flat-pickr
+          ref="fpRef"
+          v-model="selectedDate"
+          :config="fpConfig"
+          class="hidden-fp-input"
+          aria-label="选择历史聊天日期"
+        />
       </div>
 
       <button v-if="isViewingHistory" class="glass-btn glass-btn-wide" @click="scrollToLatest">

@@ -5,6 +5,8 @@
       src="/assets/stethoscope.webp"
       class="decor-stethoscope"
       alt="听诊器"
+      width="702"
+      height="732"
       @click="handleStethClick"
     />
   </div>
@@ -81,6 +83,8 @@
         src="/assets/glasses.webp"
         class="decor-glasses"
         alt="金边眼镜"
+        width="582"
+        height="333"
         @click="handleGlassesClick"
       />
       <div class="doctor-signature">

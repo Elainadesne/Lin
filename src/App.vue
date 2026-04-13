@@ -27,7 +27,13 @@
             <p>诊疗笔记</p>
           </div>
           <div class="page-back close-book-area" @click="closeBook">
-            <img src="/doodles/doodle_1.webp" class="doodle-img" alt="妈妈超厉害！" />
+            <img
+              src="/doodles/doodle_1.webp"
+              class="doodle-img"
+              alt="妈妈超厉害！"
+              width="1033"
+              height="616"
+            />
           </div>
         </div>
 
@@ -36,7 +42,13 @@
             <ChatRoom />
           </div>
           <div class="page-back close-book-area" @click="closeBook">
-            <img src="/doodles/doodle_2.webp" class="doodle-img" alt="绿色奶龙" />
+            <img
+              src="/doodles/doodle_2.webp"
+              class="doodle-img"
+              alt="绿色奶龙"
+              width="717"
+              height="680"
+            />
           </div>
         </div>
 
@@ -49,6 +61,8 @@
               src="/doodles/doodle_3.webp"
               class="doodle-img"
               alt="给叔叔/阿姨的开心药（不苦！）"
+              width="1221"
+              height="645"
             />
           </div>
         </div>
@@ -58,7 +72,13 @@
             <Garden />
           </div>
           <div class="page-back close-book-area" @click="closeBook">
-            <img src="/doodles/doodle_4.webp" class="doodle-img" alt="休息一会儿吧！" />
+            <img
+              src="/doodles/doodle_4.webp"
+              class="doodle-img"
+              alt="休息一会儿吧！"
+              width="1221"
+              height="645"
+            />
           </div>
         </div>
 
@@ -67,7 +87,13 @@
             <Settings />
           </div>
           <div class="page-back close-book-area" @click="closeBook">
-            <img src="/doodles/doodle_5.webp" class="doodle-img" alt="妈妈的秘密！" />
+            <img
+              src="/doodles/doodle_5.webp"
+              class="doodle-img"
+              alt="妈妈的秘密！"
+              width="723"
+              height="1189"
+            />
           </div>
         </div>
 
