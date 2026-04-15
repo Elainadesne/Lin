@@ -175,6 +175,58 @@ const triggerThemeSwitch = (): void => {
 </script>
 
 <style scoped>
+.pull-cord-container {
+  position: fixed;
+  top: -20px;
+  right: 25px;
+  transform-origin: top center;
+  z-index: 1000;
+  animation: ice-swing 8s ease-in-out infinite;
+  cursor: pointer;
+  width: 60px;
+  height: 220px;
+}
+
+@keyframes ice-swing {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(1.5deg);
+  }
+  75% {
+    transform: rotate(-1.5deg);
+  }
+}
+
+.cord {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transition: height 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  width: 100%;
+  height: 120px;
+}
+
+.pull-cord-container.pulled .cord {
+  height: 160px;
+}
+
+.ice-crystal-svg {
+  position: absolute;
+  bottom: -60px;
+  left: 0;
+  filter: drop-shadow(0px 4px 6px rgba(0, 0, 0, 0.2));
+  width: 60px;
+  height: 200px;
+  pointer-events: none;
+}
+
+body.dark-mode .ice-crystal-svg {
+  filter: drop-shadow(0px 4px 10px rgba(180, 230, 255, 0.3));
+}
+
 @keyframes pulse-star {
   0% {
     transform: scale(0.6) rotate(0deg);

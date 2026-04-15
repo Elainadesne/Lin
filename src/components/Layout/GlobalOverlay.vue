@@ -45,7 +45,69 @@ const handleClose = (type: 'birthday' | 'tarot' | 'scale'): void => {
 };
 </script>
 
-<style scoped>
+<style>
+#global-overlay {
+  display: flex;
+  position: fixed;
+  top: 0;
+  left: 0;
+  flex-direction: column;
+  perspective: 1000px;
+  z-index: 9999;
+  padding: 5vh 0;
+  width: 100%;
+  height: 100vh;
+  overflow-y: auto;
+  pointer-events: none;
+}
+
+@keyframes handOverFromTop {
+  0% {
+    transform: translateY(-120vh) rotateX(45deg) scale(0.8);
+    opacity: 0;
+  }
+  70% {
+    transform: translateY(5vh) rotateX(-5deg) scale(1.05);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0) rotateX(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes handBackToTop {
+  0% {
+    transform: translateY(0) rotateX(0) scale(1);
+    opacity: 1;
+  }
+  30% {
+    transform: translateY(5vh) rotateX(-5deg) scale(1.05);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-120vh) rotateX(45deg) scale(0.8);
+    opacity: 0;
+  }
+}
+.close-overlay-btn {
+  transition: transform 0.1s;
+  cursor: pointer;
+  margin-top: 15px;
+  box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3);
+  border: none;
+  border-radius: 8px;
+  background: var(--tab-1);
+  padding: 12px;
+  width: 100%;
+  color: #fff;
+  font-weight: bold;
+  font-size: 15px;
+}
+.close-overlay-btn:active {
+  transform: scale(0.96);
+}
+
 .global-overlay-container {
   display: flex;
   position: fixed;
@@ -55,7 +117,7 @@ const handleClose = (type: 'birthday' | 'tarot' | 'scale'): void => {
   perspective: 1000px;
   z-index: 9999;
   padding: 5vh 0;
-  width: 100vw;
+  width: 100%;
   height: 100vh;
   overflow-y: auto;
   pointer-events: none;

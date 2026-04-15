@@ -263,4 +263,144 @@ const testStream = (): void => {
 };
 </script>
 
-<style scoped></style>
+<style scoped>
+.oh-title {
+  color: #4a5568;
+}
+.oh-desc {
+  color: #2d3748;
+}
+body.dark-mode .oh-title {
+  color: #e2e8f0;
+}
+body.dark-mode .oh-desc {
+  color: #cbd5e1;
+}
+
+.dev-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 15px;
+}
+.dev-group {
+  border: 1px dashed rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.03);
+  padding: 14px;
+}
+body.dark-mode .dev-group {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+}
+.dev-group h4 {
+  opacity: 0.8;
+  margin-bottom: 10px;
+  color: var(--text-main);
+  font-size: 13px;
+}
+.dev-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.dev-btn {
+  flex: 1;
+  transition: transform 0.1s;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  background: var(--card-bg);
+  padding: 8px;
+  color: var(--text-ai);
+  font-weight: bold;
+}
+.dev-btn:active {
+  transform: scale(0.95);
+}
+.dev-select {
+  flex: 1;
+  outline: none;
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  background: var(--card-bg);
+  padding: 8px;
+  color: var(--text-ai);
+  font-weight: bold;
+}
+.dev-garden-frame {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+  background: var(--card-bg);
+  height: 220px;
+  overflow: hidden;
+}
+
+.dev-chat-box {
+  position: relative;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+  background: var(--card-bg);
+  padding: 12px;
+  height: 280px;
+  overflow-y: auto;
+  color: var(--text-ai);
+  font-size: 13px;
+}
+.dev-chat-box::-webkit-scrollbar {
+  display: none;
+}
+
+.error-heading {
+  padding: 20px;
+  color: red;
+  text-align: center;
+}
+.marquee-text {
+  width: 100%;
+}
+.send-btn-icon {
+  margin-top: 2px;
+}
+
+#page-4-wrapper {
+  display: none;
+}
+#tab-dev {
+  display: none;
+}
+.dev-page-front {
+  padding: 25px 15px 90px 15px;
+}
+.dev-archive-title {
+  margin-bottom: 5px;
+  color: #e74c3c;
+}
+.dev-page-back-text {
+  padding-top: 60%;
+  color: #aaa;
+  font-weight: bold;
+  font-size: 14px;
+  text-align: center;
+}
+.dev-btn-green {
+  background: #2ecc71;
+  color: #fff;
+}
+.dev-btn-orange {
+  background: #f39c12;
+  color: #fff;
+}
+.dev-msg-narration {
+  margin-bottom: 0;
+}
+.dev-msg-user {
+  transform: rotate(2deg);
+  margin: 5px 0 15px auto;
+  padding: 10px 14px;
+}
+</style>

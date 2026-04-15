@@ -719,6 +719,47 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+#confetti-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  z-index: 9999;
+  transition: opacity 2s ease;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+}
+#confetti-canvas.active {
+  opacity: 1;
+}
+.garden-svg-container canvas {
+  cursor: pointer;
+  outline: none;
+  width: 100% !important;
+  height: 100% !important;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.present-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0.6;
+  animation: eqPulse 1s infinite alternate;
+  height: 100%;
+  color: var(--text-main);
+  font-weight: bold;
+  font-size: 12px;
+}
+.present-error {
+  padding-top: 40px;
+  color: #e74c3c;
+  font-weight: bold;
+  font-size: 12px;
+  text-align: center;
+}
+
 .birthday-present-container {
   display: flex;
   position: absolute;

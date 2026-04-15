@@ -232,28 +232,10 @@ const handleClose = (): void => {
   pointer-events: none;
 }
 
-.tarot-card-container.fly-away {
-  animation: handBackToTopNoFade 1s cubic-bezier(0.36, 0, 0.66, -0.56) forwards;
-  pointer-events: none;
-}
-
-@keyframes handBackToTopNoFade {
-  0% {
-    transform: translateY(0) rotateX(0) scale(1);
-  }
-  30% {
-    transform: translateY(5vh) rotateX(-5deg) scale(1.05);
-  }
-  100% {
-    transform: translateY(-120vh) rotateX(45deg) scale(0.8);
-  }
-}
-
 .tarot-ui-backdrop {
   display: flex;
   flex-direction: column;
   align-items: center;
-
   transition:
     background-color 0.8s ease,
     box-shadow 0.8s ease,
@@ -261,7 +243,6 @@ const handleClose = (): void => {
   box-shadow: none;
   border: 1px solid transparent;
   border-radius: 12px;
-
   background: transparent;
   padding: 20px 20px 10px 20px;
   width: 280px;
@@ -288,6 +269,22 @@ body.dark-mode .tarot-ui-backdrop.show-ui {
   cursor: pointer;
   outline: none;
 }
+.tarot-card-container.fly-away {
+  animation: handBackToTopNoFade 1s cubic-bezier(0.36, 0, 0.66, -0.56) forwards;
+  pointer-events: none;
+}
+
+@keyframes handBackToTopNoFade {
+  0% {
+    transform: translateY(0) rotateX(0) scale(1);
+  }
+  30% {
+    transform: translateY(5vh) rotateX(-5deg) scale(1.05);
+  }
+  100% {
+    transform: translateY(-120vh) rotateX(45deg) scale(0.8);
+  }
+}
 
 .tarot-text-area {
   transform: translateY(10px);
@@ -298,7 +295,6 @@ body.dark-mode .tarot-ui-backdrop.show-ui {
   margin-top: 15px;
   width: 100%;
 }
-
 .tarot-ui-backdrop.show-ui .tarot-text-area {
   transform: translateY(0);
   opacity: 1;
@@ -306,6 +302,7 @@ body.dark-mode .tarot-ui-backdrop.show-ui {
 
 .tarot-flip-container {
   position: relative;
+  perspective: 1000px;
   width: 220px;
   height: 360px;
 }
@@ -337,6 +334,7 @@ body.dark-mode .tarot-ui-backdrop.show-ui {
 }
 .tarot-front {
   transform: rotateY(180deg);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
   background: #fff;
 }
 .tarot-back-text {
@@ -354,15 +352,38 @@ body.dark-mode .tarot-ui-backdrop.show-ui {
 .tarot-reversed {
   transform: rotate(180deg);
 }
+
 .tarot-title {
   margin-bottom: 15px;
   min-height: 24px;
+  color: #4a5568;
   font-weight: 800;
   font-size: 16px;
   text-align: center;
 }
+body.dark-mode .tarot-title {
+  color: #e2e8f0;
+}
 .tarot-title-text {
   display: inline-block;
   transition: all 0.4s ease;
+}
+
+.close-overlay-btn {
+  transition: transform 0.1s;
+  cursor: pointer;
+  margin-top: 15px;
+  box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3);
+  border: none;
+  border-radius: 8px;
+  background: var(--tab-1, #d6c5b3);
+  padding: 12px;
+  width: 100%;
+  color: #fff;
+  font-weight: bold;
+  font-size: 15px;
+}
+.close-overlay-btn:active {
+  transform: scale(0.96);
 }
 </style>

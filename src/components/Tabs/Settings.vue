@@ -82,52 +82,53 @@
     </div>
   </div>
 
-  <div class="setting-item">
-    <div class="setting-row">
-      <label>背景音乐自动播放</label>
-      <label class="switch">
-        <input
-          v-model="appStore.settings.autoPlay"
-          type="checkbox"
-          aria-label="开关：背景音乐自动播放"
-        />
-        <span class="slider"></span>
-      </label>
-    </div>
-    <div class="setting-row" style="margin-top: 15px">
-      <label>同步天气与节假日 (开启需定位)</label>
-      <label class="switch">
-        <input
-          v-model="appStore.settings.syncEnvData"
-          type="checkbox"
-          aria-label="开关：同步天气与节假日"
-          @change="handleEnvSyncChange"
-        />
-        <span class="slider"></span>
-      </label>
-    </div>
-    <div class="setting-row" style="margin-top: 15px">
-      <label>启动时自动翻开</label>
-      <label class="switch">
-        <input
-          v-model="appStore.settings.autoOpen"
-          type="checkbox"
-          aria-label="开关：启动时自动翻开"
-        />
-        <span class="slider"></span>
-      </label>
-    </div>
-    <div class="setting-row" style="margin-top: 15px">
-      <label>全部使用系统字体</label>
-      <label class="switch">
-        <input
-          v-model="appStore.settings.useSysFont"
-          type="checkbox"
-          aria-label="开关：全部使用系统字体"
-        />
-        <span class="slider"></span>
-      </label>
-    </div>
+  <div class="setting-item setting-row">
+    <label>背景音乐自动播放</label>
+    <label class="switch">
+      <input
+        v-model="appStore.settings.autoPlay"
+        type="checkbox"
+        aria-label="开关：背景音乐自动播放"
+      />
+      <span class="slider"></span>
+    </label>
+  </div>
+
+  <div class="setting-item setting-row">
+    <label>同步天气与节假日 (开启需定位)</label>
+    <label class="switch">
+      <input
+        v-model="appStore.settings.syncEnvData"
+        type="checkbox"
+        aria-label="开关：同步天气与节假日"
+        @change="handleEnvSyncChange"
+      />
+      <span class="slider"></span>
+    </label>
+  </div>
+
+  <div class="setting-item setting-row">
+    <label>启动时自动翻开</label>
+    <label class="switch">
+      <input
+        v-model="appStore.settings.autoOpen"
+        type="checkbox"
+        aria-label="开关：启动时自动翻开"
+      />
+      <span class="slider"></span>
+    </label>
+  </div>
+
+  <div class="setting-item setting-row">
+    <label>全部使用系统字体</label>
+    <label class="switch">
+      <input
+        v-model="appStore.settings.useSysFont"
+        type="checkbox"
+        aria-label="开关：全部使用系统字体"
+      />
+      <span class="slider"></span>
+    </label>
   </div>
 
   <button class="reset-btn" @click="handleReset">恢复默认设置</button>
@@ -208,11 +209,13 @@ body.dark-mode .num-input:focus {
 
 .theme-selector {
   display: flex;
+  align-items: stretch;
   gap: 10px;
   border: 1px solid var(--border-light);
   border-radius: 12px;
   background: rgba(0, 0, 0, 0.04);
   padding: 6px;
+  height: 46px;
 }
 
 body.dark-mode .theme-selector {
@@ -220,19 +223,22 @@ body.dark-mode .theme-selector {
 }
 
 .theme-radio {
+  display: flex !important;
   flex: 1;
-  justify-content: center;
-  align-items: center;
+  justify-content: center !important;
+  align-items: center !important;
   opacity: 0.6;
   transition: all 0.2s;
   cursor: pointer;
   margin-bottom: 0;
   border-radius: 8px;
-  padding: 8px 0;
+  padding: 0 !important;
+  height: 100%;
+  overflow: hidden;
   color: var(--text-main);
   font-weight: 800;
   font-size: calc(var(--base-font-size) - 2px);
-  text-align: center;
+  line-height: normal;
 }
 
 .theme-radio input {
@@ -249,5 +255,148 @@ body.dark-mode .theme-selector {
 body.dark-mode .theme-radio.active {
   background: var(--tab-3);
   color: #1a1a1a;
+}
+
+.setting-item {
+  margin-top: 35px;
+}
+.setting-item label {
+  display: block;
+  margin-bottom: 15px;
+  color: var(--text-main);
+  font-weight: 800;
+  font-size: 15px;
+}
+input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  outline: none;
+  box-shadow: inset 1px 2px 5px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  background: #e1e8e5;
+  width: 100%;
+  height: 12px;
+  touch-action: pan-y;
+}
+body.dark-mode input[type='range'] {
+  box-shadow: inset 1px 2px 5px rgba(0, 0, 0, 0.3);
+  background: #3b4252;
+}
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  transition: none;
+  will-change: transform;
+  cursor: pointer;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+  border: 3px solid var(--tab-4);
+  border-radius: 50%;
+  background: #fff;
+  width: 28px;
+  height: 28px;
+}
+input[type='range']::-webkit-slider-thumb:active {
+  transform: scale(1.15);
+}
+
+.reset-btn {
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+  cursor: pointer;
+  margin-top: 40px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  border: 2px solid var(--tab-1);
+  border-radius: 20px;
+  background: var(--card-bg);
+  padding: 12px 24px;
+  width: 100%;
+  color: var(--text-main);
+  font-weight: 800;
+  font-size: 14px;
+  font-family: var(--font-ui-sans);
+}
+.reset-btn:active {
+  transform: scale(0.96);
+}
+body.dark-mode .reset-btn {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.2);
+  color: #f0f0f0;
+}
+
+.switch {
+  display: inline-block;
+  position: relative;
+  width: 50px;
+  height: 26px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  margin-bottom: 0 !important;
+}
+.switch input {
+  position: absolute;
+  opacity: 0;
+  margin: 0;
+  width: 0;
+  height: 0;
+}
+.slider {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  transition: 0.4s;
+  cursor: pointer;
+  border-radius: 34px;
+  background-color: #ccc;
+}
+body.dark-mode .slider {
+  background-color: #555;
+}
+.slider:before {
+  position: absolute;
+  bottom: 4px;
+  left: 4px;
+  transition: 0.4s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  border-radius: 50%;
+  background-color: white;
+  width: 18px;
+  height: 18px;
+  content: '';
+}
+input:checked + .slider {
+  transition:
+    0.4s,
+    background-color 0.8s ease;
+  background-color: var(--player-theme, #bdc7b9);
+}
+input:checked + .slider:before {
+  transform: translateX(24px);
+}
+
+.setting-row {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  margin-bottom: 18px !important;
+  width: 100%;
+}
+.setting-row:last-child {
+  margin-bottom: 0 !important;
+}
+
+label.switch {
+  display: inline-block !important;
+  flex-shrink: 0;
+  margin-bottom: 0 !important;
+}
+
+.setting-row > label:not(.switch) {
+  display: inline-block !important;
+  flex: 1;
+  margin-bottom: 0 !important;
 }
 </style>

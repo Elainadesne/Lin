@@ -23,14 +23,11 @@
     "lint:fix": "eslint . --fix",
     "preview": "vite preview"
   },
-  "browserslist": [
-    "defaults"
-  ],
   "dependencies": {
     "@tanstack/vue-virtual": "^3.13.23",
     "@tresjs/core": "^5.8.0",
     "@vueuse/core": "^14.2.1",
-    "dompurify": "^3.3.3",
+    "dompurify": "^3.4.0",
     "flatpickr": "^4.6.13",
     "howler": "^2.2.4",
     "marked": "^18.0.0",
@@ -45,7 +42,7 @@
     "@types/howler": "^2.2.12",
     "@types/node": "^25.6.0",
     "@types/three": "^0.183.1",
-    "@vitejs/plugin-vue": "^6.0.5",
+    "@vitejs/plugin-vue": "^6.0.6",
     "eslint": "^10.2.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-import-resolver-typescript": "^4.4.4",
@@ -53,13 +50,13 @@
     "eslint-plugin-sonarjs": "^4.0.2",
     "eslint-plugin-vue": "^10.8.0",
     "eslint-plugin-vuejs-accessibility": "^2.5.0",
-    "globals": "^17.4.0",
+    "globals": "^17.5.0",
     "license-checker-rseidelsohn": "^4.4.2",
-    "prettier": "3.8.2",
+    "prettier": "3.8.3",
     "prettier-plugin-css-order": "^2.2.0",
     "prettier-plugin-packagejson": "^3.0.2",
     "typescript": "^6.0.2",
-    "typescript-eslint": "^8.58.1",
+    "typescript-eslint": "^8.58.2",
     "vite": "^8.0.8",
     "vite-plugin-font": "^5.1.2",
     "vue-tsc": "^3.2.6"

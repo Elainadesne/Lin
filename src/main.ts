@@ -2,8 +2,6 @@ import Tres from '@tresjs/core';
 import { createPinia } from 'pinia';
 import { createApp, type Component } from 'vue';
 
-import '../style.css';
-
 import { css as childCss } from '../rawfonts/Dymon-ShouXieTi.otf';
 import { css as narrCss, css as userCss } from '../rawfonts/LXGWWenKaiScreen.ttf';
 import { css as qinCss } from '../rawfonts/XuanZongTi-v0.1.otf';

@@ -138,4 +138,127 @@ onMounted(() => {
 defineExpose({ adjustTabs });
 </script>
 
-<style scoped></style>
+<style scoped>
+.tabs-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 1;
+  margin-top: 6%;
+  margin-left: -15px;
+  width: 42px;
+}
+.tab {
+  position: relative;
+  transform: translateX(0);
+  transition:
+    transform 0.6s
+      linear(
+        0,
+        0.311 9.1%,
+        0.548 18.2%,
+        0.718 27.2%,
+        0.824 36.3%,
+        0.887 45.4%,
+        0.95 55%,
+        0.985 64.1%,
+        1.01 73.1%,
+        1 100%
+      ),
+    color 0.3s ease;
+  will-change: transform;
+  cursor: pointer;
+  box-shadow:
+    -2px 6px 10px rgba(0, 0, 0, 0.15),
+    inset 1px 1px 2px rgba(255, 255, 255, 0.5),
+    inset -1px -1px 2px rgba(0, 0, 0, 0.1);
+  border-radius: 0 12px 12px 0;
+  padding: 16px 8px 16px 22px;
+  overflow: hidden;
+  color: #555;
+  font-weight: 800;
+  font-size: calc(var(--base-font-size) - 1px);
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}
+body.use-sys-fonts .tab {
+  letter-spacing: 3px !important;
+}
+.tab::before {
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0.6;
+  mix-blend-mode: multiply;
+  background-image: var(--page-noise);
+  background-repeat: repeat;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  content: '';
+}
+.tab.active {
+  transform: translateX(12px);
+  box-shadow:
+    -4px 8px 12px rgba(0, 0, 0, 0.2),
+    inset 1px 1px 2px rgba(255, 255, 255, 0.6);
+  color: #222;
+}
+.tab[data-index='0'] {
+  background: var(--tab-1);
+}
+.tab[data-index='1'] {
+  background: var(--tab-2);
+}
+.tab[data-index='2'] {
+  background: var(--tab-3);
+}
+.tab[data-index='3'] {
+  background: var(--tab-4);
+}
+
+.tab.is-top-tab {
+  position: absolute;
+  top: -46px;
+  transform: translateY(18px);
+  z-index: 1;
+  box-shadow:
+    2px -4px 10px var(--shadow-color),
+    inset 2px 2px 5px rgba(255, 255, 255, 0.4);
+  border-radius: 12px 12px 0 0;
+  padding: 12px 20px 35px 20px;
+  letter-spacing: 2px;
+  writing-mode: horizontal-tb;
+  white-space: nowrap;
+}
+.tab.is-top-tab.active {
+  transform: translateY(0);
+}
+
+.tab.is-bottom-tab {
+  position: absolute;
+  top: auto;
+  bottom: -46px;
+  transform: translateY(-18px);
+  z-index: 1;
+  box-shadow:
+    2px 4px 10px var(--shadow-color),
+    inset 2px -2px 5px rgba(255, 255, 255, 0.4);
+  border-radius: 0 0 12px 12px;
+  padding: 35px 20px 12px 20px;
+  letter-spacing: 0px;
+  writing-mode: horizontal-tb;
+  white-space: nowrap;
+}
+body.use-sys-fonts .tab.is-bottom-tab {
+  letter-spacing: 2px !important;
+}
+.tab.is-bottom-tab.active {
+  transform: translateY(0);
+}
+
+#tab-dev {
+  background: #e74c3c !important;
+  color: white !important;
+}
+</style>

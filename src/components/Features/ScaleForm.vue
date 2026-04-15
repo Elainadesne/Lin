@@ -289,9 +289,232 @@ const handleAnimationEnd = (e: AnimationEvent): void => {
 <style scoped>
 .scale-notebook {
   display: flex;
+  position: relative;
+  flex-shrink: 0;
   flex-direction: column;
+
+  animation: handOverFromTop 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  margin: auto;
+  box-shadow:
+    0 15px 40px rgba(0, 0, 0, 0.1),
+    0 2px 8px rgba(0, 0, 0, 0.04);
+  border-radius: 16px;
+  background: #fdfcfb;
+  background-image: var(--paper-noise);
+  padding: 45px 35px 50px 35px;
+  width: 90vw;
+  max-width: 580px;
   max-height: 100%;
   overflow: hidden !important;
+  pointer-events: auto;
+  color: #2c3e50;
+}
+
+body.dark-mode .scale-notebook {
+  box-shadow:
+    0 15px 40px rgba(0, 0, 0, 0.6),
+    inset 0 1px 1px rgba(255, 255, 255, 0.05);
+  background: #252932;
+  color: #d8dee5;
+}
+
+.scale-close-btn {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  z-index: 50;
+  transition:
+    color 0.2s,
+    transform 0.2s;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  color: rgba(0, 0, 0, 0.2);
+  font-size: 32px;
+  line-height: 28px;
+  font-family: Arial, sans-serif;
+  text-align: center;
+}
+.scale-close-btn:hover {
+  transform: scale(1.15) rotate(90deg);
+  color: #2ecc71;
+}
+body.dark-mode .scale-close-btn {
+  color: rgba(255, 255, 255, 0.2);
+}
+body.dark-mode .scale-close-btn:hover {
+  color: #2ecc71;
+}
+
+.scale-title {
+  margin-bottom: 25px;
+  color: #2c3e50;
+  font-weight: 700;
+  font-size: calc(var(--base-font-size) + 14px);
+  font-family: var(--font-lin);
+  text-align: center;
+  text-wrap: balance;
+}
+body.dark-mode .scale-title {
+  color: #f0f0f0;
+}
+
+.scale-desc {
+  margin-bottom: 30px;
+  border-left: 4px solid #2ecc71;
+  border-radius: 0 8px 8px 0;
+  background: rgba(46, 204, 113, 0.06);
+  padding: 14px 18px;
+  color: var(--text-main);
+  font-size: calc(var(--base-font-size) - 1px);
+  line-height: 1.6;
+}
+body.dark-mode .scale-desc {
+  background: rgba(46, 204, 113, 0.08);
+  color: #c8d2d9;
+}
+
+.scale-q {
+  transition: opacity 0.4s;
+  margin-bottom: 30px;
+}
+.scale-q-text {
+  transition: all 0.4s ease;
+  margin-bottom: 12px;
+  color: #34495e;
+  font-weight: 600;
+  font-size: var(--base-font-size);
+  line-height: 1.5;
+}
+body.dark-mode .scale-q-text {
+  color: #e2e8f0;
+}
+.scale-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.scale-q.answered .scale-q-text {
+  opacity: 0.6;
+  color: #95a5a6;
+  text-decoration: line-through;
+}
+body.dark-mode .scale-q.answered .scale-q-text {
+  color: #6d7f8b;
+}
+
+.opt-label {
+  display: inline-block;
+  position: relative;
+  transition: color 0.3s;
+  cursor: pointer;
+  padding: 6px 12px;
+  color: var(--text-ai);
+  font-weight: bold;
+  font-size: calc(var(--base-font-size) - 2px);
+}
+.opt-label input[type='radio'] {
+  display: none;
+}
+.opt-label:hover {
+  color: #27ae60;
+}
+body.dark-mode .opt-label {
+  color: #94a3b8;
+}
+
+.opt-label.circled-option {
+  z-index: 2;
+  color: #27ae60;
+}
+body.dark-mode .opt-label.circled-option {
+  color: #2ecc71;
+}
+.opt-label.circled-option::before {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(var(--rand-rot, -4deg));
+  z-index: 99 !important;
+  animation: sketchCircle 0.3s ease-out forwards;
+  border: 2px solid #2ecc71;
+  border-radius: var(--rand-br, 60% 40% 50% 50% / 40% 50% 60% 40%);
+  width: var(--rand-w, 110%);
+  height: var(--rand-h, 130%);
+  pointer-events: none;
+  content: '';
+}
+
+@keyframes sketchCircle {
+  0% {
+    opacity: 0;
+    clip-path: polygon(0 0, 0 0, 0 100%, 0 100%);
+  }
+  100% {
+    opacity: 1;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+  }
+}
+
+.notebook-btn {
+  transition: all 0.2s;
+  cursor: pointer;
+  margin-top: 15px;
+  border: 2px dashed;
+  border-radius: 12px;
+  background: transparent;
+  padding: 14px;
+  width: 100%;
+  font-weight: 800;
+  font-size: 16px;
+  font-family: var(--font-ui-sans);
+  letter-spacing: 1px;
+}
+.submit-btn {
+  border-color: #2ecc71;
+  color: #27ae60;
+}
+.submit-btn:hover {
+  background: rgba(46, 204, 113, 0.08);
+}
+.submit-btn.incomplete {
+  opacity: 0.7;
+  cursor: not-allowed;
+  border-color: #bdc3c7;
+  background: transparent;
+  color: #95a5a6;
+}
+body.dark-mode .submit-btn.incomplete {
+  border-color: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.notebook-btn:active {
+  transform: scale(0.98);
+}
+
+.scale-done-notebook {
+  padding: 60px 40px;
+  text-align: center;
+}
+.scale-done-title {
+  margin-bottom: 15px;
+  color: #2ecc71;
+  font-size: 32px;
+  font-family: var(--font-lin);
+}
+.scale-done-p1 {
+  margin-bottom: 10px;
+  color: var(--text-main);
+  font-weight: bold;
+  font-size: 16px;
+}
+.scale-done-p2 {
+  opacity: 0.8;
+  margin-bottom: 30px;
+  color: var(--text-ai);
+  font-size: 14px;
 }
 
 .scale-notebook.is-closing {
@@ -302,7 +525,9 @@ const handleAnimationEnd = (e: AnimationEvent): void => {
 .scale-questions-container {
   flex: 1;
   margin-bottom: 15px;
+  margin-left: -15px;
   padding-right: 5px;
+  padding-left: 15px;
   height: 0;
   overflow-y: auto;
 }
@@ -341,9 +566,5 @@ body.dark-mode .scale-questions-container::-webkit-scrollbar-thumb {
 
 body.dark-mode .highlight-flash {
   --flash-bg: rgba(46, 204, 113, 0.2);
-}
-
-.submit-btn.incomplete {
-  cursor: pointer;
 }
 </style>
