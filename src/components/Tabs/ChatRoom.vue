@@ -1060,11 +1060,6 @@ body.dark-mode .tooltip-arrow {
 </style>
 
 <style>
-/* =========================================
-   全局注入样式区 (解决 v-html 和 body 挂载问题)
-   ========================================= */
-
-/* 1. 聊天气泡基础与 Markdown 渲染 (v-html 内容) */
 .user-note::before {
   position: absolute;
   top: -6px;
@@ -1296,7 +1291,6 @@ body.dark-mode span.msg-children {
   height: calc(var(--base-font-size) + 2px);
 }
 
-/* 2. 日历插件 Flatpickr 挂载在 body 上的样式 */
 .flatpickr-calendar {
   position: absolute;
   transform: translateY(-10px);
