@@ -24,7 +24,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@tanstack/vue-virtual": "^3.13.23",
+    "@tanstack/vue-virtual": "^3.13.24",
     "@tresjs/core": "^5.8.0",
     "@vueuse/core": "^14.2.1",
     "dompurify": "^3.4.0",
