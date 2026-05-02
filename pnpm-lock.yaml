@@ -5,7 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  koffi: 2.10.0
+  koffi: 2.15.6
 
 importers:
 
@@ -1214,8 +1214,8 @@ packages:
   keyv@4.5.4:
     resolution: {integrity: sha512-oxVHkHR/EJf2CNXnWxRLW6mg7JyCCUcG0DtEGmL2ctUo1PNTin1PUil+r/+4r5MpVgC/fn1kjsx7mjSujKqIpw==}
 
-  koffi@2.10.0:
-    resolution: {integrity: sha512-TkCU8t2KE/ZcWGh87nRvqMPg0p2t+MXCz/6zAmQohf2UKyVPjGnx0suY88EeQbrP9aIMDVqgUu2j9phy/srqng==}
+  koffi@2.15.6:
+    resolution: {integrity: sha512-WQBpM5uo74UQ17UpsFN+PUOrQQg4/nYdey4SGVluQun2drYYfePziLLWdSmFb4wSdWlJC1aimXQnjhPCheRKuw==}
 
   levn@0.4.1:
     resolution: {integrity: sha512-+bT2uH4E5LGE7h/n3evcS/sQlJXCpIp6ym8OWJ5eV6+67Dsql/LaaT7qJBAt2rzfoa/5QBGBhxDix1dMt2kQKQ==}
@@ -2511,7 +2511,7 @@ snapshots:
       commander: 12.1.0
       fs-extra: 11.3.4
       google-protobuf: 3.21.4
-      koffi: 2.10.0
+      koffi: 2.15.6
       proto-to-cli: 1.2.1
       set-value: 4.1.0
 
@@ -2941,7 +2941,7 @@ snapshots:
     dependencies:
       json-buffer: 3.0.1
 
-  koffi@2.10.0: {}
+  koffi@2.15.6: {}
 
   levn@0.4.1:
     dependencies:

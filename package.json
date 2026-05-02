@@ -63,7 +63,7 @@
   },
   "pnpm": {
     "overrides": {
-      "koffi": "2.10.0"
+      "koffi": "2.15.6"
     }
   }
 }
