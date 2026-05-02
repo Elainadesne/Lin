@@ -37,14 +37,24 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Cache Vite fonts
+        uses: actions/cache@v5
+        with:
+          path: node_modules/.vite
+          key: ${{ runner.os }}-vite-fonts-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-vite-fonts-
+
       - name: Build
         run: pnpm run build
+        env:
+          UV_THREADPOOL_SIZE: '2'
 
       - name: Setup Pages
         uses: actions/configure-pages@v6
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v5.0.0
+        uses: actions/upload-pages-artifact@v5
         with:
           path: './dist'
 
