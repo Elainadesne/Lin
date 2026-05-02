@@ -7,7 +7,7 @@
     <canvas ref="confettiRef" class="confetti-canvas"></canvas>
 
     <div class="tres-wrapper" :class="{ 'is-visible': showGift, 'is-kept': isKeeping }">
-      <TresCanvas clear-color="#000000" :clear-alpha="0" alpha>
+      <TresCanvas alpha clear-color="transparent" :clear-alpha="0" :renderer="createWebGPURenderer">
         <TresPerspectiveCamera :position="[18, 18, 18]" :look-at="[0, 0, 0]" />
         <TresAmbientLight :intensity="1.2" color="#ffffff" />
         <TresDirectionalLight
@@ -172,7 +172,9 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, computed, nextTick, watch } from 'vue';
+import type { TresRendererSetupContext } from '@tresjs/core';
+import { WebGPURenderer } from 'three/webgpu';
+import { computed, nextTick, onMounted, onUnmounted, ref, toValue, watch } from 'vue';
 
 import { useAudioStore } from '../../stores/useAudioStore';
 import { useChatStore } from '../../stores/useChatStore';
@@ -180,6 +182,16 @@ import { useChatStore } from '../../stores/useChatStore';
 const emit = defineEmits<(e: 'close') => void>();
 const chatStore = useChatStore();
 const audioStore = useAudioStore();
+
+const createWebGPURenderer = (ctx: TresRendererSetupContext): WebGPURenderer => {
+  const renderer = new WebGPURenderer({
+    canvas: toValue(ctx.canvas),
+    alpha: true,
+    antialias: true,
+  });
+  renderer.setClearColor(0x000000, 0);
+  return renderer;
+};
 
 const S = 8,
   HS = S / 2,
@@ -231,12 +243,10 @@ const calculatePagination = async (): Promise<void> => {
   const el = measureRef.value;
   const fullText = rawText.value;
   const newPages: string[] = [];
-
   let startIndex = 0;
 
   while (startIndex < fullText.length) {
     let endIndex = startIndex + 1;
-
     while (endIndex <= fullText.length) {
       el.textContent = fullText.substring(startIndex, endIndex);
       if (el.scrollHeight > el.clientHeight) {
@@ -245,14 +255,11 @@ const calculatePagination = async (): Promise<void> => {
       }
       endIndex++;
     }
-
     if (endIndex > fullText.length) endIndex = fullText.length;
     if (endIndex === startIndex) endIndex++;
-
     newPages.push(fullText.substring(startIndex, endIndex));
     startIndex = endIndex;
   }
-
   pages.value = newPages.length > 0 ? newPages : [fullText];
   currentPage.value = 0;
 };
@@ -282,7 +289,6 @@ interface Side {
   pieces: Piece[];
 }
 const sides = ref<Side[]>([]);
-
 const bow = ref({
   pos: [0, HS + 1, 0] as [number, number, number],
   firstPos: [0, HS + 1, 0] as [number, number, number],
@@ -298,7 +304,6 @@ const bow = ref({
 for (let s = 0; s < 6; ++s) {
   let pos: number[];
   let rot = [0, 0, 0];
-
   if (s === 0) {
     pos = [0, -HS, 0];
     rot[0] = Math.PI / 2;
@@ -354,21 +359,15 @@ const updatePresentAnimation = (): void => {
   if (!opening.value && !opened.value) {
     groupRotation.value[1] += 0.005;
     groupPosition.value[1] = Math.sin(Date.now() * 0.002) * 0.5;
-
-    if (isHovered.value) {
-      groupRotation.value[2] = Math.sin(Date.now() * 0.02) * 0.08;
-    } else {
-      groupRotation.value[2] *= 0.9;
-    }
+    if (isHovered.value) groupRotation.value[2] = Math.sin(Date.now() * 0.02) * 0.08;
+    else groupRotation.value[2] *= 0.9;
   } else if (opening.value) {
     groupPosition.value[0] = (Math.random() - 0.5) * 0.15;
     groupPosition.value[2] = (Math.random() - 0.5) * 0.15;
-
     openTime.value += 3;
     if (openTime.value >= 100) {
       opening.value = false;
       opened.value = true;
-
       setTimeout(() => {
         showEnvelope.value = true;
       }, 600);
@@ -384,7 +383,6 @@ const updatePresentAnimation = (): void => {
     }
   } else if (opened.value) {
     const gravity = 0.015;
-
     sides.value.forEach((side) => {
       side.pieces.forEach((p: Piece) => {
         p.vel[1] -= gravity;
@@ -404,7 +402,6 @@ const updatePresentAnimation = (): void => {
     bow.value.rot[1] += bow.value.rotSpeed[1];
     bow.value.rot[2] += bow.value.rotSpeed[2];
   }
-
   presentRafId = requestAnimationFrame(updatePresentAnimation);
 };
 
@@ -423,25 +420,56 @@ const onPointerEnter = (): void => {
 const onPointerLeave = (): void => {
   isHovered.value = false;
 };
-
 const handleAnimationEnd = (e: AnimationEvent): void => {
-  if (e.animationName === 'handBackToTop') {
-    emit('close');
-  }
+  if (e.animationName === 'handBackToTop') emit('close');
 };
 
 const confettiRef = ref<HTMLCanvasElement | null>(null);
 let rafId: number;
 let isConfettiStopping = false;
-let ctx: CanvasRenderingContext2D;
 
 const DEG_TO_RAD = Math.PI / 180;
+const hexToRgb = (hex: string): [number, number, number] => {
+  const bigint = parseInt(hex.replace('#', ''), 16);
+  return [((bigint >> 16) & 255) / 255, ((bigint >> 8) & 255) / 255, (bigint & 255) / 255];
+};
+
 const colors = [
-  ['#df0049', '#660671'],
-  ['#00e857', '#005291'],
-  ['#2bebbc', '#05798a'],
-  ['#ffd200', '#b06c00'],
+  { f: hexToRgb('#df0049'), b: hexToRgb('#660671') },
+  { f: hexToRgb('#00e857'), b: hexToRgb('#005291') },
+  { f: hexToRgb('#2bebbc'), b: hexToRgb('#05798a') },
+  { f: hexToRgb('#ffd200'), b: hexToRgb('#b06c00') },
 ];
+
+const maxVertices = 15000;
+const vertexData = new Float32Array(maxVertices * 5);
+let vertexCount = 0;
+
+const pushVertex = (x: number, y: number, color: [number, number, number]): void => {
+  if (vertexCount >= maxVertices) return;
+  const idx = vertexCount * 5;
+  vertexData[idx] = x;
+  vertexData[idx + 1] = y;
+  vertexData[idx + 2] = color[0];
+  vertexData[idx + 3] = color[1];
+  vertexData[idx + 4] = color[2];
+  vertexCount++;
+};
+
+const pushQuad = (
+  p1: { x: number; y: number },
+  p2: { x: number; y: number },
+  p3: { x: number; y: number },
+  p4: { x: number; y: number },
+  color: [number, number, number],
+): void => {
+  pushVertex(p1.x, p1.y, color);
+  pushVertex(p2.x, p2.y, color);
+  pushVertex(p3.x, p3.y, color);
+  pushVertex(p1.x, p1.y, color);
+  pushVertex(p3.x, p3.y, color);
+  pushVertex(p4.x, p4.y, color);
+};
 
 class Vector2 {
   constructor(
@@ -489,13 +517,13 @@ class Paper {
   xSpeed = 40.0;
   ySpeed = Math.random() * 60 + 50.0;
   time = Math.random();
-  front: string;
-  back: string;
+  front: [number, number, number];
+  back: [number, number, number];
   corners: { x: number; y: number }[];
   constructor() {
     const ci = Math.floor(Math.random() * colors.length);
-    this.front = colors[ci][0];
-    this.back = colors[ci][1];
+    this.front = colors[ci].f;
+    this.back = colors[ci].b;
     this.corners = Array.from({ length: 4 }, (_, i) => ({
       x: Math.cos(this.angle + DEG_TO_RAD * (i * 90 + 45)),
       y: Math.sin(this.angle + DEG_TO_RAD * (i * 90 + 45)),
@@ -507,9 +535,8 @@ class Paper {
     this.pos.x += Math.cos(this.time * this.oscSpeed) * this.xSpeed * dt;
     this.pos.y += this.ySpeed * dt;
     if (this.pos.y > window.innerHeight + 100) {
-      if (isConfettiStopping) {
-        this.dead = true;
-      } else {
+      if (isConfettiStopping) this.dead = true;
+      else {
         this.pos.x = Math.random() * window.innerWidth;
         this.pos.y = -50;
       }
@@ -517,32 +544,22 @@ class Paper {
   }
   draw(retina: number): void {
     const cosA = Math.cos(DEG_TO_RAD * this.rotation);
-    ctx.fillStyle = cosA > 0 ? this.front : this.back;
-    ctx.beginPath();
-    this.corners.forEach((c, i) => {
-      const px = (this.pos.x + c.x * this.size) * retina;
-      const py = (this.pos.y + c.y * this.size * cosA) * retina;
-      if (i === 0) ctx.moveTo(px, py);
-      else ctx.lineTo(px, py);
-    });
-    ctx.closePath();
-    ctx.fill();
+    const color = cosA > 0 ? this.front : this.back;
+    const pts = this.corners.map((c) => ({
+      x: (this.pos.x + c.x * this.size) * retina,
+      y: (this.pos.y + c.y * this.size * cosA) * retina,
+    }));
+    pushQuad(pts[0], pts[1], pts[2], pts[3], color);
   }
 }
-
-const entities: (Paper | ConfettiRibbon)[] = [];
-let lastTime = Date.now();
-let w = window.innerWidth;
-let h = window.innerHeight;
-let retina = Math.min(2, window.devicePixelRatio || 1);
 
 class ConfettiRibbon {
   public dead = false;
   particleCount = 20;
   particleDist = 8.0;
   particles: EulerMass[] = [];
-  front: string;
-  back: string;
+  front: [number, number, number];
+  back: [number, number, number];
   xOff: number;
   yOff: number;
   pos: Vector2;
@@ -555,8 +572,8 @@ class ConfettiRibbon {
 
   constructor(x: number, y: number) {
     const ci = Math.floor(Math.random() * colors.length);
-    this.front = colors[ci][0];
-    this.back = colors[ci][1];
+    this.front = colors[ci].f;
+    this.back = colors[ci].b;
     this.xOff = Math.cos(45 * DEG_TO_RAD) * 8.0;
     this.yOff = Math.sin(45 * DEG_TO_RAD) * 8.0;
     this.pos = new Vector2(x, y);
@@ -566,11 +583,10 @@ class ConfettiRibbon {
     this.oscSpeed = Math.random() * 2 + 2;
     this.oscDist = Math.random() * 40 + 40;
     this.ySpeed = Math.random() * 40 + 80;
-    for (let i = 0; i < this.particleCount; i++) {
+    for (let i = 0; i < this.particleCount; i++)
       this.particles.push(new EulerMass(x, y - i * this.particleDist, 1, 0.05));
-    }
   }
-  update(dt: number): void {
+  update(dt: number, w: number, h: number): void {
     this.time += dt * this.oscSpeed;
     this.pos.y += this.ySpeed * dt;
     this.pos.x += Math.cos(this.time) * this.oscDist * dt;
@@ -607,9 +623,8 @@ class ConfettiRibbon {
       this.particles[i].pos.y = this.particles[i - 1].pos.y + rpY * this.particleDist;
     }
     if (this.pos.y > h + this.particleDist * this.particleCount) {
-      if (isConfettiStopping) {
-        this.dead = true;
-      } else {
+      if (isConfettiStopping) this.dead = true;
+      else {
         this.pos.y = -Math.random() * h;
         this.pos.x = Math.random() * w;
         this.prevPos.x = this.pos.x;
@@ -632,14 +647,14 @@ class ConfettiRibbon {
           (p1y - this.particles[i + 1].pos.y) -
         (this.particles[i].pos.y - this.particles[i + 1].pos.y) *
           (p1x - this.particles[i + 1].pos.x);
-      ctx.fillStyle = side < 0 ? this.front : this.back;
-      ctx.beginPath();
-      ctx.moveTo(this.particles[i].pos.x * retina, this.particles[i].pos.y * retina);
-      ctx.lineTo(this.particles[i + 1].pos.x * retina, this.particles[i + 1].pos.y * retina);
-      ctx.lineTo(p1x * retina, p1y * retina);
-      ctx.lineTo(p0x * retina, p0y * retina);
-      ctx.closePath();
-      ctx.fill();
+      const color = side < 0 ? this.front : this.back;
+      pushQuad(
+        { x: this.particles[i].pos.x * retina, y: this.particles[i].pos.y * retina },
+        { x: this.particles[i + 1].pos.x * retina, y: this.particles[i + 1].pos.y * retina },
+        { x: p1x * retina, y: p1y * retina },
+        { x: p0x * retina, y: p0y * retina },
+        color,
+      );
     }
   }
 }
@@ -647,7 +662,6 @@ class ConfettiRibbon {
 const stopConfetti = (): void => {
   isConfettiStopping = true;
 };
-
 const closeComponent = (): void => {
   isKeeping.value = true;
   stopConfetti();
@@ -660,55 +674,212 @@ onMounted(() => {
   setTimeout(() => {
     showGift.value = true;
     hintTimeout = setTimeout(() => {
-      if (!opening.value && !opened.value) {
-        showHint.value = true;
-      }
+      if (!opening.value && !opened.value) showHint.value = true;
     }, 4000);
   }, 1500);
 
-  if (!confettiRef.value) return;
-  const context = confettiRef.value.getContext('2d');
-  if (!context) return;
-  ctx = context;
-  confettiRef.value.width = w * retina;
-  confettiRef.value.height = h * retina;
-  confettiRef.value.style.opacity = '1';
-
-  const paperCount = w < 768 ? 20 : 40;
-  const ribbonCount = w < 768 ? 8 : 16;
-  for (let i = 0; i < paperCount; i++) entities.push(new Paper());
-  for (let i = 0; i < ribbonCount; i++)
-    entities.push(new ConfettiRibbon(Math.random() * w, -Math.random() * h * 2));
-
-  const animate = (): void => {
-    const now = Date.now();
-    let dt = (now - lastTime) / 1000;
-    lastTime = now;
-    if (dt <= 0.001) dt = 0.001;
-    dt = Math.min(dt, 0.05);
-
-    ctx.clearRect(0, 0, w * retina, h * retina);
-
-    entities.splice(0, entities.length, ...entities.filter((e) => !e.dead));
-
-    entities.forEach((p) => {
-      p.update(dt);
-      p.draw(retina);
-    });
-
-    if (isConfettiStopping && entities.length === 0) {
-      cancelAnimationFrame(rafId);
-      if (isKeeping.value && !isClosing.value) {
-        isClosing.value = true;
-        setTimeout(() => {
-          emit('close');
-        }, 500);
-      }
-    } else {
-      rafId = requestAnimationFrame(animate);
+  void (async (): Promise<void> => {
+    if (!confettiRef.value) return;
+    if (!navigator.gpu) {
+      console.warn('当前浏览器不支持 WebGPU，彩纸特效将被禁用。');
+      return;
     }
-  };
-  animate();
+
+    try {
+      const adapter = await navigator.gpu.requestAdapter();
+      if (!adapter) return;
+      const device = await adapter.requestDevice();
+      const contextWGPU = confettiRef.value.getContext('webgpu') as GPUCanvasContext;
+
+      let w = window.innerWidth;
+      let h = window.innerHeight;
+      let retina = Math.min(2, window.devicePixelRatio || 1);
+
+      confettiRef.value.width = w * retina;
+      confettiRef.value.height = h * retina;
+
+      const format = navigator.gpu.getPreferredCanvasFormat();
+      contextWGPU.configure({
+        device,
+        format,
+        alphaMode: 'premultiplied',
+      });
+
+      const shaderModule = device.createShaderModule({
+        code: `
+          struct Uniforms {
+            resolution: vec2<f32>,
+          };
+          @group(0) @binding(0) var<uniform> uniforms: Uniforms;
+
+          struct VertexInput {
+            @location(0) pos: vec2<f32>,
+            @location(1) color: vec3<f32>,
+          };
+
+          struct VertexOutput {
+            @builtin(position) position: vec4<f32>,
+            @location(0) color: vec3<f32>,
+          };
+
+          @vertex
+          fn vs_main(in: VertexInput) -> VertexOutput {
+            var out: VertexOutput;
+            let ndc_x = (in.pos.x / uniforms.resolution.x) * 2.0 - 1.0;
+            let ndc_y = 1.0 - (in.pos.y / uniforms.resolution.y) * 2.0;
+            out.position = vec4<f32>(ndc_x, ndc_y, 0.0, 1.0);
+            out.color = in.color;
+            return out;
+          }
+
+          @fragment
+          fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
+            return vec4<f32>(in.color, 1.0);
+          }
+        `,
+      });
+
+      const pipeline = device.createRenderPipeline({
+        layout: 'auto',
+        vertex: {
+          module: shaderModule,
+          entryPoint: 'vs_main',
+          buffers: [
+            {
+              arrayStride: 20,
+              attributes: [
+                { shaderLocation: 0, offset: 0, format: 'float32x2' },
+                { shaderLocation: 1, offset: 8, format: 'float32x3' },
+              ],
+            },
+          ],
+        },
+        fragment: {
+          module: shaderModule,
+          entryPoint: 'fs_main',
+          targets: [
+            {
+              format,
+              blend: {
+                color: {
+                  srcFactor: 'src-alpha',
+                  dstFactor: 'one-minus-src-alpha',
+                  operation: 'add',
+                },
+                alpha: { srcFactor: 'one', dstFactor: 'one-minus-src-alpha', operation: 'add' },
+              },
+            },
+          ],
+        },
+        primitive: {
+          topology: 'triangle-list',
+          cullMode: 'none',
+        },
+      });
+
+      const vertexBuffer = device.createBuffer({
+        size: maxVertices * 20,
+        usage: 0x0020 | 0x0008,
+      });
+
+      const uniformBuffer = device.createBuffer({
+        size: 16,
+        usage: 0x0040 | 0x0008,
+      });
+
+      const bindGroup = device.createBindGroup({
+        layout: pipeline.getBindGroupLayout(0),
+        entries: [{ binding: 0, resource: { buffer: uniformBuffer } }],
+      });
+
+      const entities: (Paper | ConfettiRibbon)[] = [];
+      const paperCount = w < 768 ? 20 : 40;
+      const ribbonCount = w < 768 ? 8 : 16;
+      for (let i = 0; i < paperCount; i++) entities.push(new Paper());
+      for (let i = 0; i < ribbonCount; i++)
+        entities.push(new ConfettiRibbon(Math.random() * w, -Math.random() * h * 2));
+
+      let lastTime = Date.now();
+
+      const animate = (): void => {
+        const now = Date.now();
+        let dt = (now - lastTime) / 1000;
+        lastTime = now;
+        if (dt <= 0.001) dt = 0.001;
+        dt = Math.min(dt, 0.05);
+
+        if (window.innerWidth !== w || window.innerHeight !== h) {
+          w = window.innerWidth;
+          h = window.innerHeight;
+          if (confettiRef.value) {
+            confettiRef.value.width = w * retina;
+            confettiRef.value.height = h * retina;
+          }
+        }
+
+        entities.splice(0, entities.length, ...entities.filter((e) => !e.dead));
+        vertexCount = 0;
+
+        entities.forEach((p) => {
+          if (p instanceof ConfettiRibbon) {
+            p.update(dt, w, h);
+          } else {
+            p.update(dt);
+          }
+          p.draw(retina);
+        });
+
+        const commandEncoder = device.createCommandEncoder();
+
+        if (w > 0 && h > 0) {
+          const textureView = contextWGPU.getCurrentTexture().createView();
+          const passEncoder = commandEncoder.beginRenderPass({
+            colorAttachments: [
+              {
+                view: textureView,
+                clearValue: { r: 0, g: 0, b: 0, a: 0 },
+                loadOp: 'clear',
+                storeOp: 'store',
+              },
+            ],
+          });
+
+          if (vertexCount > 0) {
+            device.queue.writeBuffer(
+              uniformBuffer,
+              0,
+              new Float32Array([w * retina, h * retina, 0, 0]),
+            );
+            device.queue.writeBuffer(vertexBuffer, 0, vertexData, 0, vertexCount * 5);
+
+            passEncoder.setPipeline(pipeline);
+            passEncoder.setBindGroup(0, bindGroup);
+            passEncoder.setVertexBuffer(0, vertexBuffer);
+            passEncoder.draw(vertexCount);
+          }
+
+          passEncoder.end();
+          device.queue.submit([commandEncoder.finish()]);
+        }
+
+        if (isConfettiStopping && entities.length === 0) {
+          cancelAnimationFrame(rafId);
+          if (isKeeping.value && !isClosing.value) {
+            isClosing.value = true;
+            setTimeout(() => {
+              emit('close');
+            }, 500);
+          }
+          return;
+        }
+
+        rafId = requestAnimationFrame(animate);
+      };
+      animate();
+    } catch (err) {
+      console.error('WebGPU 初始化失败: ', err);
+    }
+  })();
 });
 
 onUnmounted(() => {
@@ -719,74 +890,14 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-#confetti-canvas {
+.confetti-canvas {
   position: fixed;
   top: 0;
   left: 0;
-  opacity: 0;
   z-index: 9999;
-  transition: opacity 2s ease;
+  transition: opacity 1s;
   width: 100vw;
   height: 100vh;
-  pointer-events: none;
-}
-#confetti-canvas.active {
-  opacity: 1;
-}
-.garden-svg-container canvas {
-  cursor: pointer;
-  outline: none;
-  width: 100% !important;
-  height: 100% !important;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.present-loading {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  opacity: 0.6;
-  animation: eqPulse 1s infinite alternate;
-  height: 100%;
-  color: var(--text-main);
-  font-weight: bold;
-  font-size: 12px;
-}
-.present-error {
-  padding-top: 40px;
-  color: #e74c3c;
-  font-weight: bold;
-  font-size: 12px;
-  text-align: center;
-}
-
-.birthday-present-container {
-  display: flex;
-  position: absolute;
-  top: 0;
-  left: 0;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  pointer-events: none;
-}
-.birthday-present-container.is-closing {
-  opacity: 0;
-  transition: opacity 0.5s ease;
-  pointer-events: none;
-}
-
-.confetti-canvas {
-  position: absolute;
-  top: 0;
-  left: 0;
-  transition: opacity 1s;
-  width: 100%;
-  height: 100%;
   pointer-events: none;
 }
 
@@ -797,9 +908,15 @@ onUnmounted(() => {
   z-index: 10;
   transition: all 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
   inset: 0;
+  background: transparent !important;
   width: 100vw;
   height: 100vh;
   pointer-events: none;
+}
+
+.tres-wrapper :deep(canvas) {
+  background: transparent !important;
+  pointer-events: auto;
 }
 
 .tres-wrapper.is-visible {
@@ -807,9 +924,6 @@ onUnmounted(() => {
   opacity: 1;
 }
 
-.tres-wrapper :deep(canvas) {
-  pointer-events: auto;
-}
 .tres-wrapper.is-kept,
 .tres-wrapper.is-kept :deep(canvas) {
   pointer-events: none !important;
@@ -818,7 +932,8 @@ onUnmounted(() => {
 .interact-hint {
   position: absolute;
   bottom: 15%;
-  transform: translateY(10px);
+  left: 50%;
+  transform: translate(-50%, 10px);
   opacity: 0;
   z-index: 15;
   transition: all 0.8s ease;
@@ -831,8 +946,45 @@ onUnmounted(() => {
 }
 
 .interact-hint.is-visible {
-  transform: translateY(0);
+  transform: translate(-50%, 0);
   opacity: 1;
+}
+
+.close-btn {
+  position: absolute;
+  bottom: 8%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  backdrop-filter: blur(5px);
+  transition: all 0.3s;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(255, 77, 121, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 25px;
+  background: #ff4d79;
+  padding: 12px 30px;
+  pointer-events: auto;
+  color: #fff;
+  font-weight: 800;
+  font-size: 16px;
+  letter-spacing: 1px;
+}
+
+.close-btn:hover {
+  transform: translate(-50%, -2px);
+  box-shadow: 0 6px 20px rgba(255, 77, 121, 0.4);
+  background: #ff3366;
+}
+
+.close-btn:active {
+  transform: translate(-50%, 1px);
+}
+
+.close-btn.is-kept {
+  transform: translate(-50%, 50px);
+  opacity: 0;
+  pointer-events: none;
 }
 
 .envelope-wrapper {
@@ -1014,14 +1166,12 @@ onUnmounted(() => {
   top: 0;
   z-index: 2;
 }
-
 .fold-top {
   top: -110px;
   transform: rotateX(-179.9deg);
   transform-origin: bottom;
   z-index: 1;
 }
-
 .fold-bottom {
   top: 110px;
   transform: rotateX(179.9deg);
@@ -1033,7 +1183,6 @@ onUnmounted(() => {
   transform: rotateX(0deg);
   transition-delay: 0s;
 }
-
 .letter.is-unfolded .fold-bottom {
   transform: rotateX(0deg);
   transition-delay: 0.8s;
@@ -1116,41 +1265,6 @@ onUnmounted(() => {
 .pagination button:disabled {
   opacity: 0.3;
   cursor: not-allowed;
-}
-
-.close-btn {
-  position: absolute;
-  bottom: 8%;
-  z-index: 30;
-  backdrop-filter: blur(5px);
-  transition: all 0.3s;
-  cursor: pointer;
-  box-shadow: 0 4px 15px rgba(255, 77, 121, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  border-radius: 25px;
-  background: #ff4d79;
-  padding: 12px 30px;
-  pointer-events: auto;
-  color: #fff;
-  font-weight: 800;
-  font-size: 16px;
-  letter-spacing: 1px;
-}
-
-.close-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(255, 77, 121, 0.4);
-  background: #ff3366;
-}
-
-.close-btn:active {
-  transform: translateY(1px);
-}
-
-.close-btn.is-kept {
-  transform: translateY(50px);
-  opacity: 0;
-  pointer-events: none;
 }
 
 .shadow-measure {
