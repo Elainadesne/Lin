@@ -5,6 +5,7 @@
 ![Language: TypeScript](https://img.shields.io/badge/Language-TypeScript-3178C6?logo=typescript&logoColor=white)
 ![Bundler: Vite](https://img.shields.io/badge/Bundler-Vite-646CFF?logo=vite&logoColor=white)
 ![Platform: SillyTavern](https://img.shields.io/badge/Platform-SillyTavern-BB0D0D)
+[![Deploy to GitHub Pages](https://github.com/Elainadesne/Lin/actions/workflows/deploy.yml/badge.svg)](https://github.com/Elainadesne/Lin/actions/workflows/deploy.yml)
 
 > _然后，就是这扇门。它就那样毫无预兆地站在那里，仿佛不是你找到了它，而是它厌倦了你的兜兜转转，决定亲自站在你面前。_  
 > —— “请坐，红茶里要放糖吗？”
